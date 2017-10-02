@@ -1,13 +1,130 @@
 <!DOCTYPE html>
-<html lang="en">
+<!--
+
+Based on this:
+https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
+
+
+-->
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Title</title>
+
+    <title>Test uploader</title>
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="resources/bootstrap-filestyle.min.js"> </script>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+    <script>
+        $(document).ready(function () {
+
+            $("#btnSubmit").click(function (event) {
+
+                //stop submit the form, we will post it manually.
+                event.preventDefault();
+
+                // Get form
+                var form = $('#uploadForm')[0];
+
+                // Create an FormData object
+                var data = new FormData(form);
+
+                // If you want to add an extra field for the FormData
+                data.append("CustomField", "This is some extra data, testing");
+
+                // disabled the submit button
+                $("#btnSubmit").prop("disabled", true);
+
+                $.ajax({
+                    type: "POST",
+                    enctype: 'multipart/form-data',
+                    url: "upload",
+                    data: data,
+                    processData: false,
+                    contentType: false,
+                    cache: false,
+                    timeout: 600000,
+                    success: function (data) {
+
+                        $("#result").html(data);
+                        console.log("SUCCESS : ", data);
+                        $("#btnSubmit").prop("disabled", false);
+
+                    },
+                    error: function (e) {
+
+                        $("#result").html(e.responseText);
+                        console.log("ERROR : ", e);
+                        $("#btnSubmit").prop("disabled", false);
+
+                    }
+                });
+
+            });
+
+        });
+
+    </script>
+
+
+    <style>
+
+        bleh {
+
+            display: none;
+        }
+
+    </style>
+
+
 </head>
+
 <body>
 
-<img src="resources/ajax-loader.gif" alt="loader">
+
+<div class="container">
+
+
+
+    <form class="form-inline" method="POST" id="uploadForm" enctype="multipart/form-data">
+
+        <input type="file" class="filestyle" data-buttonText="Välj fil (max 200 MB)" name="uploadFile">
+        <input type="submit" value="Skicka" class="btn btn-primary" id="btnSubmit" >
+
+    </form>
+
+
+
+    <div id="loadingDiv">
+        <p><img src="loading.gif" alt="waiting wheel"/> Behandlar uppladdad fil..</p>
+    </div>
+
+
+    <span id="result">      <!-- stuff from servlet here -->           </span>
+
+</div>
+
+
+
+
+
+
+<script>
+
+    var $loading = $('#loadingDiv').hide();
+    $(document)
+        .ajaxStart(function () {
+            $loading.show();
+        })
+        .ajaxStop(function () {
+            $loading.hide();
+        });
+
+
+</script>
 
 </body>
-
 </html>

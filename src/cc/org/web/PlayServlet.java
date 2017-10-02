@@ -1,0 +1,401 @@
+package cc.org.web;
+
+import javax.servlet.ServletException;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+
+/**
+ * Created by crco0001 on 10/2/2017.
+ */
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Random;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.servlet.ServletConfig;
+import javax.servlet.ServletException;
+import javax.servlet.annotation.MultipartConfig;
+import javax.servlet.annotation.WebInitParam;
+import javax.servlet.annotation.WebServlet;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.Part;
+
+/**
+ *
+ * @author crco0001
+ */
+@WebServlet(name = "PlayServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap"},
+
+        initParams =  {@WebInitParam(name = "Admin",value="Apan Ola"),
+                @WebInitParam(name = "Admin2",value="Apan Ola2")
+
+        }
+
+)
+
+@MultipartConfig(fileSizeThreshold=1024*1024*50, // 50MB
+        maxFileSize=1024*1024*200,      // 200B
+        maxRequestSize=1024*1024*200)   // 200MB
+
+
+
+
+public class PlayServlet extends HttpServlet {
+
+    private transient ServletConfig servletConfig;
+
+    //replace with pcan/SelfExpiringHashMap.java
+    private final Map<Long,List<ClarivateRecord>> filesReadyForSendingToClient = new HashMap<>();
+
+    protected final Random random = new Random();
+
+    protected byte[] newLine;
+
+    @Override
+    public void init(ServletConfig config) throws ServletException {
+
+        try {
+            this.servletConfig = config;
+            this.newLine = "\n".getBytes("UTF-8");
+        } catch (UnsupportedEncodingException ex) {
+            Logger.getLogger(PlayServlet.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
+    @Override
+    public ServletConfig getServletConfig() {
+
+        return servletConfig;
+    }
+
+
+    /**
+     * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
+     * methods.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+
+
+
+    protected void reportMapSize(HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+
+        response.setContentType("text/html;charset=UTF-8");
+
+
+        try (PrintWriter out = response.getWriter()) {
+
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet PlayServlet</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("mapSize is; " + this.filesReadyForSendingToClient.size());
+
+            out.println("</body>")  ;
+            out.println("</html>");
+
+        }
+    }
+
+    protected void clearMap(HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+
+        response.setContentType("text/html;charset=UTF-8");
+
+        this.filesReadyForSendingToClient.clear();
+
+        try (PrintWriter out = response.getWriter()) {
+
+            out.println("<!DOCTYPE html>");
+            out.println("<html>");
+            out.println("<head>");
+            out.println("<title>Servlet PlayServlet</title>");
+            out.println("</head>");
+            out.println("<body>");
+            out.println("map now cleared. New mapSize is; " + this.filesReadyForSendingToClient.size());
+
+            out.println("</body>")  ;
+            out.println("</html>");
+
+        }
+    }
+
+    protected void sendFile(HttpServletRequest request, HttpServletResponse response ) throws ServletException, IOException {
+
+        response.setContentType("text/html;charset=UTF-8");
+        response.setHeader("Content-Disposition","attachment; filename=resultat.txt");
+
+        String stringID = request.getParameter("id");
+
+        Long id = null;
+        try {
+            id = Long.valueOf(stringID);
+        } catch(NumberFormatException e) {
+
+            id = null;
+        }
+
+
+        List<ClarivateRecord> listOfProcessedRecords = Collections.emptyList();
+
+        if(id != null) {
+
+            listOfProcessedRecords = this.filesReadyForSendingToClient.get(id);
+
+            if(listOfProcessedRecords == null) listOfProcessedRecords = Collections.emptyList();
+
+        }
+
+
+
+        OutputStream os = response.getOutputStream();
+
+
+        for(ClarivateRecord record : listOfProcessedRecords) {
+
+            byte[] sendThis = record.toString().getBytes("UTF-8");
+            os.write(sendThis);
+            os.write(newLine);
+        }
+
+
+        //response.setContentLength((int) sendThis.length );
+
+
+        os.flush();
+        os.close();
+
+
+        //remove from map
+        if(id != null) {
+
+
+            this.filesReadyForSendingToClient.remove(id);
+        }
+
+
+    }
+
+
+
+    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
+    /**
+     * Handles the HTTP <code>GET</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
+        String uri = request.getRequestURI();
+
+        if (uri.endsWith("/sendBack")) {
+
+            sendFile(request,response);
+        } else if(uri.endsWith("/mapSize")) {
+
+            reportMapSize(request,response);
+
+        } else if(uri.endsWith("/clearMap")) {
+
+            clearMap(request,response);
+
+        }
+
+
+
+    }
+
+    /**
+     * Handles the HTTP <code>POST</code> method.
+     *
+     * @param request servlet request
+     * @param response servlet response
+     * @throws ServletException if a servlet-specific error occurs
+     * @throws IOException if an I/O error occurs
+     */
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        response.setContentType("text/html; charset=UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+
+        // gets absolute path of the web application
+
+        String appPath = request.getServletContext().getRealPath("");
+        final Part filePart = request.getPart("uploadFile"); //TODO check null
+
+        boolean continueParsing = isTextPlain(filePart); // true if text/plain, false if null or not text/plain
+
+        PrintWriter w = response.getWriter();
+
+
+
+        if(continueParsing) {
+
+           // final String fileName = filePart.getSubmittedFileName();
+          //  final String contentType = filePart.getContentType();
+
+            //ServletOutputStream out = response.getOutputStream();
+            //out.write("MY-UTF-8 CODE".getBytes("UTF-8"));
+
+            // w.println("The filename is: " + fileName);
+            //  w.println("The size in Kb is: " +    filePart.getSize()/1024.0 );
+
+            //  w.println("The type is: " + contentType);
+
+            InputStream data = filePart.getInputStream();
+
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(data, StandardCharsets.UTF_8));
+
+
+            String line;
+            boolean isClarivateData = false;
+            while( (line = br.readLine()) != null) {
+
+                isClarivateData = ClarivateParser.identifierFound(line);
+                if(isClarivateData) break;
+
+                //w.println(line);
+            }
+
+
+
+
+
+
+
+
+
+            if(isClarivateData) {
+                w.print("<BR/>");
+
+                w.print("<p>This is a valid export file from Clarivate Analytics</p>");
+
+                //continute with parsing
+
+                ClarivateParser clarivateParser = new ClarivateParser(br);
+
+                List<ClarivateRecord> recordList = clarivateParser.parse();
+
+                w.println("<p>Number of records parsed: " +  recordList.size() +"</p>");
+
+                for(int i=0; i<recordList.size(); i++) {
+
+                    //    ClarivateRecord record = recordList.get(i);
+
+                    //     w.println("<p>" + record.title + " " + record.UT +"</p>" );
+
+                    //      w.println("<p>" + record.toString() +"</p>" );
+                    //       w.println("<BR/>");
+
+                }
+
+                w.println("<p>" +recordList.size() + " poster klassificerade</p>");
+
+
+
+                long key = this.random.nextLong();
+
+                w.println(generateDownloadLink(key,recordList));
+
+
+
+                br.close();
+
+
+            } else {
+
+                w.println("<BR/>");
+                w.print("<p>You uploaded a text/plain file but not a valid export file from Clarivate. Check again?</p>");
+                br.close();
+            }
+
+
+
+
+
+
+
+        } else {
+
+            w.println("<BR>");
+            w.println("<p>The uploaded file must be of type text/plain.</p>");
+            w.flush();
+            w.close();
+        }
+
+
+
+
+
+
+
+        w.flush();
+        w.close();
+
+
+
+    }
+
+
+
+    protected String generateDownloadLink(long key, List<ClarivateRecord> records ) {
+
+
+
+        this.filesReadyForSendingToClient.put(key, records);
+
+        return "<button type=\"button\" onclick=\"location.href='sendBack?id=" + key +"'\" value=\"Go to Google\" class=\"btn btn-info\"><span class=\"glyphicon glyphicon-download-alt\"></span> Klart för nedladdning  </button>\n" +"";
+
+
+    }
+
+
+    protected boolean isTextPlain(Part filePart) {
+
+
+        if(filePart == null) return false;
+
+        String contentType = filePart.getContentType();
+
+        return contentType.equals("text/plain");
+
+    }
+
+
+
+}
