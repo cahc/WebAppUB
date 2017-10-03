@@ -4,15 +4,23 @@ package cc.org.web;
  * Created by crco0001 on 10/2/2017.
  */
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ClarivateRecord {
 
+
+    private final Pattern EXTRACT_ADDRESSES = Pattern.compile("(?<=]).*?(\\[|$)");
 
     String title;
     String UT;
     String issn;
     String eissn;
+    String isbn;
     String DOI;
     int year;
     String WC;
@@ -45,6 +53,14 @@ public class ClarivateRecord {
 
     public String getDOI() {
         return DOI;
+    }
+
+    public String getIsbn() {
+        return isbn;
+    }
+
+    public void setIsbn(String isbn) {
+        this.isbn = isbn;
     }
 
     public void setDOI(String DOI) {
@@ -114,6 +130,31 @@ public class ClarivateRecord {
     public void setAuthorsAndAffiliations(String authorsAndAffiliations) {
         this.authorsAndAffiliations = authorsAndAffiliations;
     }
+
+
+    public List<String> getAddressParts() {
+
+
+        if(this.authorsAndAffiliations == null) return Collections.emptyList();
+
+        List<String> result = new ArrayList<>(5);
+        Matcher matcher = EXTRACT_ADDRESSES.matcher( getAuthorsAndAffiliations() );
+        if(matcher.find()) {
+
+            result.add(matcher.group());
+
+            while(matcher.find()) {
+                result.add(matcher.group());
+            }
+        }
+
+
+        return result;
+
+    }
+
+
+
 
     public String getReprintInfo() {
         return reprintInfo;

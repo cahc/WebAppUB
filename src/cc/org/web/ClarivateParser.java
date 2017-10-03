@@ -184,6 +184,15 @@ public class ClarivateParser {
                     }
 
 
+                    if(line2.startsWith("BN ")) {
+
+                        record.setIsbn( line2.substring(3)  );
+
+
+                    }
+
+
+
                     if(line2.startsWith("DT ")) {
 
                         record.setPubType( line2.substring(3)  );

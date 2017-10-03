@@ -43,13 +43,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebInitParam;
-import javax.servlet.annotation.WebServlet;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
 import static cc.org.web.ClarivateToJsat.extractTermsFromClarivateRecord;
@@ -59,7 +54,7 @@ import static cc.org.web.ClarivateToJsat.printSparseVector;
  *
  * @author crco0001
  */
-@WebServlet(name = "PlayServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap"},
+@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap"},
 
         initParams =  {@WebInitParam(name = "Admin",value="Apan Ola"),
                 @WebInitParam(name = "Admin2",value="Apan Ola2")
@@ -75,7 +70,7 @@ import static cc.org.web.ClarivateToJsat.printSparseVector;
 
 
 
-public class PlayServlet extends HttpServlet {
+public class ClarivateServlet extends HttpServlet {
 
     private final String regex = "diva2:\\d{1,20}";
 
@@ -129,7 +124,7 @@ public class PlayServlet extends HttpServlet {
             this.servletConfig = config;
             this.newLine = "\n".getBytes("UTF-8");
         } catch (UnsupportedEncodingException ex) {
-            Logger.getLogger(PlayServlet.class.getName()).log(Level.SEVERE, null, ex);
+            Logger.getLogger(ClarivateServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
 
 
@@ -196,7 +191,7 @@ public class PlayServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet PlayServlet</title>");
+            out.println("<title>Servlet ClarivateServlet</title>");
             out.println("</head>");
             out.println("<body>");
             out.println("mapSize is; " + this.filesReadyForSendingToClient.size());
@@ -218,7 +213,7 @@ public class PlayServlet extends HttpServlet {
             out.println("<!DOCTYPE html>");
             out.println("<html>");
             out.println("<head>");
-            out.println("<title>Servlet PlayServlet</title>");
+            out.println("<title>Servlet ClarivateServlet</title>");
             out.println("</head>");
             out.println("<body>");
             out.println("map now cleared. New mapSize is; " + this.filesReadyForSendingToClient.size());
@@ -271,6 +266,11 @@ public class PlayServlet extends HttpServlet {
             byte[] sendThis2 = termsForClassifications.toString().getBytes("UTF-8");
             os.write(sendThis2);
             os.write(newLine);
+
+            //byte[] sendThis5 = record.getAddressParts().toString().getBytes("UTF-8");
+            //os.write(sendThis5);
+            //os.write(newLine);
+
 
             //can be nnz == 0
             SparseVector sparseVector = getSparseVectorEngLevel5(termsForClassifications);

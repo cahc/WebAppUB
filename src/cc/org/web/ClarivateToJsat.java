@@ -6,6 +6,7 @@ import SwePub.Record;
 import jsat.linear.IndexValue;
 import jsat.linear.SparseVector;
 import misc.LanguageTools.HelperFunctions;
+import misc.LanguageTools.RemoveCopyRightFromAbstract;
 import misc.Parsers.SimpleParser;
 import misc.Stemmers.EnglishStemmer;
 import misc.Stemmers.SwedishStemmer;
@@ -131,7 +132,7 @@ public class ClarivateToJsat {
 
     public static String makeFeaturesFromISBN(String ISBNstring) {
 
-
+        if(ISBNstring == null) return null;
        Record dummy = new Record();
        dummy.setTitle("Dummy title from fake Record");
        String isbn = HelperFunctions.extractAndHyphenateISBN(ISBNstring,true, dummy );
@@ -172,7 +173,12 @@ public class ClarivateToJsat {
         //TEXT
         String text = record.getTitle();
 
-        if(record.getSummary() != null) text = text.concat(" ").concat(record.getSummary());
+        if(record.getSummary() != null) {
+
+            String cleanedAbstract = RemoveCopyRightFromAbstract.cleanedAbstract( record.getSummary() );
+
+            text = text.concat(" ").concat( cleanedAbstract );
+        }
 
 
         List<String> hostTerms = makeFeaturesFromHost( record.getSeries() );
@@ -181,9 +187,10 @@ public class ClarivateToJsat {
         List<String> issnTerms2 = makeFeaturesFromISSN( record.getIssn() );
         List<String> keyWordTerms = makeFeaturesFromKeywords( record.getKeywords() );
 
-        //TODO implement
-        // List<String> isbnTerms = makeFeaturesFromISBN(  )
-       //List<String> isbnTerms = makeFeaturesFromAffiliations(  )
+        String isbnTerms = makeFeaturesFromISBN( record.getIsbn() );
+
+
+        List<String> affilTerms = makeFeaturesFromAffiliation( record.getAddressParts() );
 
         List<String> allTerms = new ArrayList<>();
 
@@ -192,6 +199,11 @@ public class ClarivateToJsat {
         allTerms.addAll(issnTerms1);
         allTerms.addAll(issnTerms2);
         allTerms.addAll(keyWordTerms);
+
+        allTerms.addAll(affilTerms);
+
+        if(isbnTerms != null) allTerms.add(isbnTerms);
+
 
 
         return allTerms;
