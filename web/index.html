@@ -50,14 +50,14 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
                     timeout: 600000,
                     success: function (data) {
 
-                        $("#result").html(data);
+                        $("#resultat").html(data);
                         console.log("SUCCESS : ", data);
                         $("#btnSubmit").prop("disabled", false);
 
                     },
                     error: function (e) {
 
-                        $("#result").html(e.responseText);
+                        $("#resultat").html(e.responseText);
                         console.log("ERROR : ", e);
                         $("#btnSubmit").prop("disabled", false);
 
@@ -85,7 +85,7 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
                     cache: false,
                     success: function(result) {
 
-                        $('#demo').html(result);
+                        $('#resultat').html(result);
 
 
 
@@ -231,8 +231,8 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 <BR/>
 <div class="container">
 
-    <div id="demo">  <!-- stuff from servlet here -->  </div>
-    <span id="result">      <!-- stuff from servlet here -->           </span>
+
+    <span id="resultat">      <!-- stuff from servlet here -->           </span>
 
 </div>
 
