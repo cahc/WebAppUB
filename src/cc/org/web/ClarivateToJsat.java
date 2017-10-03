@@ -1,10 +1,10 @@
 package cc.org.web;
 
-import Database.IndexAndGlobalTermWeights;
-import Database.MyOwnException;
 import Database.SwePubParser;
 
 import SwePub.Record;
+import jsat.linear.IndexValue;
+import jsat.linear.SparseVector;
 import misc.LanguageTools.HelperFunctions;
 import misc.Parsers.SimpleParser;
 import misc.Stemmers.EnglishStemmer;
@@ -13,15 +13,12 @@ import misc.stopwordLists.EnglishStopWords60;
 import misc.stopwordLists.SwedishStopWords60;
 
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by crco0001 on 10/2/2017.
  */
-public class PlayGround {
+public class ClarivateToJsat {
 
 
     static SwedishStopWords60 swedishStopWords60 = new SwedishStopWords60();
@@ -32,6 +29,8 @@ public class PlayGround {
 
     public static List<String> makeFeaturesFromHost(String host) {
 
+
+        if(host == null) return Collections.emptyList();
 
 
         String temp = Normalizer.normalize(host, Normalizer.Form.NFD);
@@ -53,6 +52,7 @@ public class PlayGround {
 
     public static List<String> makeFeaturesFromAffiliation(List<String> affiliations) {
 
+        if(affiliations == null) return Collections.emptyList();
 
         HashSet<String> set = new HashSet<>();
 
@@ -75,7 +75,9 @@ public class PlayGround {
 
     public static List<String> makeFeaturesFromEngText(String text) {
 
-        List<String> list_eng = SimpleParser.parse(text, true, PlayGround.englishStopWords60, PlayGround.englishStemmer);
+        if(text == null) return Collections.emptyList();
+
+        List<String> list_eng = SimpleParser.parse(text, true, ClarivateToJsat.englishStopWords60, ClarivateToJsat.englishStemmer);
 
         List<String> list_eng2 = new ArrayList<>();
         for (String t : list_eng) {
@@ -88,7 +90,9 @@ public class PlayGround {
 
     public static List<String> makeFeaturesFromSweText(String text) {
 
-        List<String> list_eng = SimpleParser.parse(text, true, PlayGround.swedishStopWords60, PlayGround.swedishStemmer);
+        if(text == null) return Collections.emptyList();
+
+        List<String> list_eng = SimpleParser.parse(text, true, ClarivateToJsat.swedishStopWords60, ClarivateToJsat.swedishStemmer);
 
         List<String> list_eng2 = new ArrayList<>();
         for (String t : list_eng) {
@@ -100,6 +104,8 @@ public class PlayGround {
 
 
     public static List<String> makeFeaturesFromKeywords(String keywordString) {
+
+        if(keywordString == null) return Collections.emptyList();
 
         //split on ; (should not be the case but errors in registration exists)
 
@@ -123,51 +129,81 @@ public class PlayGround {
     }
 
 
-    public static List<String> makeFeaturesFromISBN(String ISBNstring) {
+    public static String makeFeaturesFromISBN(String ISBNstring) {
+
 
        Record dummy = new Record();
        dummy.setTitle("Dummy title from fake Record");
-       HelperFunctions.extractAndHyphenateISBN(ISBNstring,true, dummy );
+       String isbn = HelperFunctions.extractAndHyphenateISBN(ISBNstring,true, dummy );
 
-
-        return Collections.emptyList();
+        return isbn; //can be null!
     }
 
 
     public static List<String> makeFeaturesFromISSN(String ISSNstring) {
+
+        if(ISSNstring == null) return Collections.emptyList();
 
         return HelperFunctions.extractISSN(ISSNstring);
 
     }
 
 
-    public static void main(String[] arg) throws MyOwnException
+    public static String printSparseVector(SparseVector vec) {
 
-    {
+        StringBuilder stringbuilder = new StringBuilder();
 
+        Iterator<IndexValue> iter = vec.getNonZeroIterator();
+        stringbuilder.append("[");
+        while(iter.hasNext()) {
 
-        SwedishStopWords60 swedishStopWords60 = new SwedishStopWords60();
-        EnglishStopWords60 englishStopWords60 = new EnglishStopWords60();
+            IndexValue indexValue = iter.next();
+            stringbuilder.append(indexValue.getIndex()).append(",");
+            stringbuilder.append(indexValue.getValue()).append(" ");
 
-        SwedishStemmer swedishStemmer = new SwedishStemmer();
-        EnglishStemmer englishStemmer = new EnglishStemmer();
-
-        String englishString = "Looking at the facts, one could never ting that this shit will fly!";
-        String swedishString = "I en annan värld skulle det aldrig bli av! Skriv ett papper eller en artikel!";
-
-        List<String> list_swe = SimpleParser.parse(swedishString, true, swedishStopWords60, swedishStemmer);
-        List<String> list_eng = SimpleParser.parse(englishString, true, englishStopWords60, englishStemmer);
-
-        for (String t : list_eng) {
-            System.out.println( SwePubParser.prefixFromTIABEng.concat(t) );
         }
+        stringbuilder.append("]");
+        return stringbuilder.toString();
+    }
 
-        for (String t : list_swe) {
-            System.out.println( SwePubParser.prefixFromTIABSwe.concat(t) );
-        }
+    public static List<String> extractTermsFromClarivateRecord(ClarivateRecord record) {
 
 
+        //TEXT
+        String text = record.getTitle();
+
+        if(record.getSummary() != null) text = text.concat(" ").concat(record.getSummary());
+
+
+        List<String> hostTerms = makeFeaturesFromHost( record.getSeries() );
+        List<String> textTerms = makeFeaturesFromEngText( text );
+        List<String> issnTerms1 = makeFeaturesFromISSN( record.getEissn() );
+        List<String> issnTerms2 = makeFeaturesFromISSN( record.getIssn() );
+        List<String> keyWordTerms = makeFeaturesFromKeywords( record.getKeywords() );
+
+        //TODO implement
+        // List<String> isbnTerms = makeFeaturesFromISBN(  )
+       //List<String> isbnTerms = makeFeaturesFromAffiliations(  )
+
+        List<String> allTerms = new ArrayList<>();
+
+        allTerms.addAll(hostTerms);
+        allTerms.addAll(textTerms);
+        allTerms.addAll(issnTerms1);
+        allTerms.addAll(issnTerms2);
+        allTerms.addAll(keyWordTerms);
+
+
+        return allTerms;
 
     }
+
+
+
+
+    public static void main(String[] arg){}
+
+
+
 
 }

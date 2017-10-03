@@ -2,6 +2,7 @@ package cc.org.web;
 
 import Database.IndexAndGlobalTermWeights;
 import jsat.classifiers.Classifier;
+import jsat.linear.SparseVector;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -49,6 +50,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
+import static cc.org.web.ClarivateToJsat.extractTermsFromClarivateRecord;
+import static cc.org.web.ClarivateToJsat.printSparseVector;
+
 /**
  *
  * @author crco0001
@@ -93,6 +97,26 @@ public class PlayServlet extends HttpServlet {
     protected final Random random = new Random();
 
     protected byte[] newLine;
+
+    private SparseVector getSparseVectorEngLevel5(List<String> terms) {
+
+       int vectorSpaceSize =  englishLevel5.getNrTerms();
+
+        SparseVector sparseVector = new SparseVector(vectorSpaceSize, terms.size()/2 ); //length and initial capacity
+
+        for (String t : terms) {
+
+            int index = englishLevel5.getIndex(t);
+            if(index != -1) sparseVector.increment( index, 1d  );
+        }
+
+
+        englishLevel5.applyGlobalTermWeights(sparseVector);
+
+        return sparseVector;
+    }
+
+
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -239,6 +263,23 @@ public class PlayServlet extends HttpServlet {
             byte[] sendThis = record.toString().getBytes("UTF-8");
             os.write(sendThis);
             os.write(newLine);
+
+            List<String> termsForClassifications = extractTermsFromClarivateRecord(record);
+
+            byte[] sendThis2 = termsForClassifications.toString().getBytes("UTF-8");
+            os.write(sendThis2);
+            os.write(newLine);
+
+            //can be nnz == 0
+            SparseVector sparseVector = getSparseVectorEngLevel5(termsForClassifications);
+
+            String sparseVectorString = printSparseVector(sparseVector);
+
+            byte[] sendThis3 = sparseVectorString.toString().getBytes("UTF-8");
+            os.write(sendThis3);
+            os.write(newLine);
+            os.write(newLine);
+
         }
 
 
@@ -260,16 +301,6 @@ public class PlayServlet extends HttpServlet {
     }
 
 
-
-    // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
-    /**
-     * Handles the HTTP <code>GET</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
