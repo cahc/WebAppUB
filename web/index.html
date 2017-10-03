@@ -9,12 +9,13 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 <html>
 <head>
 
-    <title>Test uploader</title>
+    <title>Ämnesklassificering (SCB/UKÄ)<</title>
     <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="resources/hello.css">
     <script type="text/javascript" src="resources/bootstrap-filestyle.min.js"></script>
-
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
@@ -70,6 +71,34 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
     </script>
 
 
+    <script type="text/javascript">
+
+        $(document).ready(function(){
+            $('#diva-form').submit(function(e){
+                e.preventDefault();
+                var divaid=$('#divaid').val();
+
+                jQuery.ajax({
+                    url: "fetchId?divaid="+divaid,
+                    type: "GET",
+                    data: "",
+                    cache: false,
+                    success: function(result) {
+
+                        $('#demo').html(result);
+
+
+
+                    }
+                });
+            });
+        });
+
+    </script>
+
+
+
+
     <style>
 
         bleh {
@@ -85,13 +114,91 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 <body>
 
 
+
+
+<div class="corner-ribbon top-right sticky orange">Beta</div>
+
+<div class="container">
+    <h3>Automatisk ämnesklassificering enligt Standard för svensk indelning av forskningsämnen</h3>
+    <h5>Engelskspråkiga publikationer klassificeras med forskningsämnen (5-siffernivån) och svenskspråkiga publikationer med forskningsämnesgrupper (3-siffernivån). </h5>
+    <h6><a href="#" data-toggle="modal" data-target="#myModal">Klicka här för mer info.</a></h6>
+</div>
+
+<div class="container">
+
+    <!-- Trigger the modal with a button -->
+    <!-- <button type="button" class="btn btn-info" data-toggle="modal" data-target="#myModal">Hjälp</button> -->
+
+    <!-- Modal -->
+    <div class="modal fade" id="myModal" role="dialog">
+        <div class="modal-dialog">
+
+            <!-- Modal content-->
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Automatisk klassificering av publikationer enligt Standard för svensk indelning av forskningsämnen<a href="http://www.scb.se/dokumentation/klassifikationer-och-standarder/standard-for-svensk-indelning-av-forskningsamnen/"> (extern länk till schemat)</a></h4>
+                </div>
+                <div class="modal-body">
+                    <p><b>Klassifikation baseras på information från:</b></p>
+                    <p>(1) titel och abstract</p>
+                    <p>(2) okontrollerade nyckelord</p>
+                    <p>(4) issn/tidskrift</p>
+                    <p>(4) isbn-prefix/förlag</p>
+                    <p>(5) affilieringar</p>
+                    <p></p>
+                    <p>En post från DiVA behöver inte innehålla information från samtliga informationskällor (1)-(5) men mer information ger i regel säkrare klassificeringar. Posten måste dock innehålla information från (1) annars görs inget försök att klassificera posten.</p>
+                    <p>Poster från SwePub utgör träningsdata (april 2017). Endast engelska och svenska stöds. Språk identifieras automatiskt.</p>
+
+                    <p>Klassifikatorn tillskriver varje kategori en sannolikhet som är beroende på den aktuella postens innehåll. Summan av sannolikheter över alla kategorier är 1.</p>
+                    <p>Den kategori med högst sannolikhet föreslås alltid (även om sannolikheten är låg). Fler än ett förslag ges under förutsättning att kategorin har ett sannolikhetsvärde på 0.20 eller högre</p>
+
+                    <p><b>Klassifikatorn baseras på följande papper:</b></p>
+                    <p>Dual Coordinate Descent Methods for Logistic Regression and Maximum Entropy Models. doi:0.1007/s10994-010-5221-8</p>
+                    <p>Entropy-Based Term Weighting Schemes for Text Categorization in VSM. doi:10.1109/ICTAI.2015.57</p>
+
+                    <p>Buggrapporter mottages tacksamt: cristian.colliander@umu.se</p>
+                    <p>(notera att själva klassificeringen tar millisekunder men att hämta data från slöa DiVA-servrar kan ta flera sekunder..)</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+
+
+<BR/>
+
+<div class="container">
+
+    <form class="form-inline" id="diva-form" role="form">
+
+        <!-- <label for="divaid">diva2-id:</label> -->
+        <p>Få förslag på klassificeringstermer för en post som redan är registrerad i DiVA:</p>
+        <input type="text" class="form-control" id="divaid" placeholder="diva2:717780" />
+        <input type="submit" class="btn btn-primary" value="Klassificera" />
+
+    </form>
+
+
+</div>
+
+
+<BR/>
 <div class="container">
 
 
     <form class="form-inline" method="POST" id="uploadForm" enctype="multipart/form-data">
 
+        <p>Ladda upp en export-fil från Clarivate Analytics för batch-klassificering av poster: </p>
+
         <input type="file" class="filestyle" data-buttonText="Välj fil (max 200 MB)" name="uploadFile">
-        <input type="submit" value="Skicka" class="btn btn-primary" id="btnSubmit">
+        <input type="submit" value="Ladda upp och klassificera" class="btn btn-primary" id="btnSubmit">
 
     </form>
 
@@ -101,10 +208,9 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
     </div>
 
 
-    <span id="result">      <!-- stuff from servlet here -->           </span>
+
 
 </div>
-
 
 <script>
 
@@ -119,6 +225,16 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 
 
 </script>
+
+
+<BR/>
+<BR/>
+<div class="container">
+
+    <div id="demo">  <!-- stuff from servlet here -->  </div>
+    <span id="result">      <!-- stuff from servlet here -->           </span>
+
+</div>
 
 </body>
 </html>

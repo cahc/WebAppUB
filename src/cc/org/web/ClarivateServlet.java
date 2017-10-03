@@ -354,6 +354,9 @@ public class ClarivateServlet extends HttpServlet {
 
     }
 
+
+    //http://localhost:8080/fetchId?divaid=%22diva2:243244%22
+
     public void sendRequestToDivaAndClassify(HttpServletRequest request, HttpServletResponse response) throws IOException, XMLStreamException {
 
         response.setContentType("text/plain");  // Set content type of the response so that jQuery knows what it can expect.
