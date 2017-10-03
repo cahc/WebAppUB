@@ -8,6 +8,9 @@
           <element id="module-output" name="WebAppUB" />
         </element>
         <element id="dir-copy" path="$PROJECT_DIR$/WebStuff" />
+        <element id="directory" name="lib">
+          <element id="file-copy" path="$PROJECT_DIR$/lib/ClassyOct2017.jar" />
+        </element>
       </element>
       <element id="directory" name="resources">
         <element id="dir-copy" path="$PROJECT_DIR$/WebStuff" />

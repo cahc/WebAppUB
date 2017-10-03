@@ -1,5 +1,8 @@
 package cc.org.web;
 
+import Database.IndexAndGlobalTermWeights;
+import jsat.classifiers.Classifier;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -7,31 +10,35 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
+
+
 /**
  * Created by crco0001 on 10/2/2017.
  */
+
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
+
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-import java.io.Writer;
+
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
-import java.util.Collection;
+
+import java.text.DecimalFormat;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+
 import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Pattern;
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.MultipartConfig;
@@ -64,9 +71,23 @@ import javax.servlet.http.Part;
 
 public class PlayServlet extends HttpServlet {
 
+    private final String regex = "diva2:\\d{1,20}";
+
+    private final Pattern r = Pattern.compile(regex);
+
+    private IndexAndGlobalTermWeights englishLevel5 = null;
+
+    private Classifier classifierlevel5eng = null;
+
+    private Classifier classifierLevel3swe = null;
+
+    private  IndexAndGlobalTermWeights swedishLevel3 = null;
+
+    private DecimalFormat df = new DecimalFormat("#0.00");
+
     private transient ServletConfig servletConfig;
 
-    //replace with pcan/SelfExpiringHashMap.java
+
     private final Map<Long,List<ClarivateRecord>> filesReadyForSendingToClient = new HashMap<>();
 
     protected final Random random = new Random();
@@ -76,6 +97,8 @@ public class PlayServlet extends HttpServlet {
     @Override
     public void init(ServletConfig config) throws ServletException {
 
+       String whereAmI = new File(".").getAbsolutePath();
+
         try {
             this.servletConfig = config;
             this.newLine = "\n".getBytes("UTF-8");
@@ -83,6 +106,39 @@ public class PlayServlet extends HttpServlet {
             Logger.getLogger(PlayServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
 
+
+        try {
+            englishLevel5 = new IndexAndGlobalTermWeights("eng", 5);
+
+            swedishLevel3 = new IndexAndGlobalTermWeights("swe", 3);
+
+            englishLevel5.readFromMapDB();
+
+            swedishLevel3.readFromMapDB();
+
+
+
+
+
+        } catch (Throwable t) {
+
+            t.printStackTrace();
+            System.out.println("readFromMapDB throwed some shit!");
+
+        }
+
+
+        try {
+            this.classifierlevel5eng = TrainAndPredict.HelperFunctions.readSerializedClassifier("classifier.eng.5.ser");
+            this.classifierLevel3swe = TrainAndPredict.HelperFunctions.readSerializedClassifier("classifier.swe.3.ser");
+
+        } catch (Throwable t) {
+            t.printStackTrace();
+            System.out.println("Could not read serialized model!");
+        }
+
+
+        System.out.println("From servlet init() I am here: " + whereAmI);
     }
 
     @Override
