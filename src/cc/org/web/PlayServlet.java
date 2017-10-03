@@ -1,8 +1,14 @@
 package cc.org.web;
 
 import Database.IndexAndGlobalTermWeights;
+import SwePub.ClassificationCategory;
+import SwePub.HsvCodeToName;
+import WebApp.ClassProbPair;
+import jsat.classifiers.CategoricalResults;
 import jsat.classifiers.Classifier;
+import jsat.classifiers.DataPoint;
 import jsat.linear.SparseVector;
+import jsat.linear.Vec;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -31,12 +37,8 @@ import java.nio.charset.StandardCharsets;
 
 import java.text.DecimalFormat;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import java.util.Random;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -273,13 +275,59 @@ public class PlayServlet extends HttpServlet {
             //can be nnz == 0
             SparseVector sparseVector = getSparseVectorEngLevel5(termsForClassifications);
 
+            sparseVector.normalize();
+            int nnz = sparseVector.nnz();
+
+            //classify
+
+            CategoricalResults result = this.classifierlevel5eng.classify( new DataPoint(sparseVector) );
+
+            int hsv = result.mostLikely();
+            double prob = result.getProb(hsv);
+            ClassificationCategory true_hsv =  HsvCodeToName.getCategoryInfo( IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv)    );
+
+            StringBuilder bestGuess = new StringBuilder("UKÄ/SCB: " + true_hsv.getCode() + " : " + true_hsv.getEng_description().replaceAll("-->","→") +  " (probability: " + df.format(prob) +")");
+
+
+            //Also suggest other categories?
+
+            Vec probabilities = result.getVecView();
+            List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+            for(int i=0; i < probabilities.length(); i++) {
+
+                if(i == hsv) continue;
+
+                if(probabilities.get(i) > 0.2) classProbPairs.add( new ClassProbPair(i,probabilities.get(i)));
+
+
+            }
+
+            Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+            for(int i=0; i<classProbPairs.size(); i++) {
+
+                ClassificationCategory true_hsv2 =  HsvCodeToName.getCategoryInfo( IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get( classProbPairs.get(i).classCode   )    );
+                double probability = classProbPairs.get(i).probability;
+                bestGuess.append("\n");
+                bestGuess.append("UKÄ/SCB: " + true_hsv2.getCode() + " : " + true_hsv2.getEng_description().replaceAll("-->","→") +  " (probability: " + df.format(probability) +")");
+
+
+            }
+
+
+
+            //Stringy
             String sparseVectorString = printSparseVector(sparseVector);
 
             byte[] sendThis3 = sparseVectorString.toString().getBytes("UTF-8");
             os.write(sendThis3);
             os.write(newLine);
-            os.write(newLine);
 
+            byte[] sendThis4 = bestGuess.toString().getBytes("UTF-8");
+            os.write(sendThis4);
+            os.write(newLine);
+            os.write(newLine);
         }
 
 
