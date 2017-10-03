@@ -190,7 +190,9 @@ public class ClarivateToJsat {
         String isbnTerms = makeFeaturesFromISBN( record.getIsbn() );
 
 
-        List<String> affilTerms = makeFeaturesFromAffiliation( record.getAddressParts() );
+        //TODO analyze Clarivate affiliation strings, not the same as data from swepub..
+
+       List<String> affilTerms = makeFeaturesFromAffiliation( record.getAddressParts() );
 
         List<String> allTerms = new ArrayList<>();
 

@@ -1,8 +1,10 @@
 package cc.org.web;
 
 import Database.IndexAndGlobalTermWeights;
+import Database.ModsOnlineParser;
 import SwePub.ClassificationCategory;
 import SwePub.HsvCodeToName;
+import SwePub.Record;
 import WebApp.ClassProbPair;
 import jsat.classifiers.CategoricalResults;
 import jsat.classifiers.Classifier;
@@ -33,6 +35,8 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
 import java.text.DecimalFormat;
@@ -41,11 +45,13 @@ import java.util.*;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.servlet.ServletConfig;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.http.Part;
+import javax.xml.stream.XMLStreamException;
 
 import static cc.org.web.ClarivateToJsat.extractTermsFromClarivateRecord;
 import static cc.org.web.ClarivateToJsat.printSparseVector;
@@ -54,7 +60,7 @@ import static cc.org.web.ClarivateToJsat.printSparseVector;
  *
  * @author crco0001
  */
-@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap"},
+@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap","/fetchId"},
 
         initParams =  {@WebInitParam(name = "Admin",value="Apan Ola"),
                 @WebInitParam(name = "Admin2",value="Apan Ola2")
@@ -348,6 +354,199 @@ public class ClarivateServlet extends HttpServlet {
 
     }
 
+    public void sendRequestToDivaAndClassify(HttpServletRequest request, HttpServletResponse response) throws IOException, XMLStreamException {
+
+        response.setContentType("text/plain");  // Set content type of the response so that jQuery knows what it can expect.
+        response.setCharacterEncoding("UTF-8"); // You want world domination, huh?
+
+        PrintWriter out = response.getWriter();
+        Matcher m = r.matcher(request.getParameterValues("divaid")[0]);
+
+        String divaNumber = null;
+        if (m.find( )) {
+            divaNumber = m.group(0);
+        }
+
+        if(divaNumber != null) {
+
+            String url2 = "http://www.diva-portal.org/smash/export.jsf?format=mods&aq=[[{\"publicationId\":\"" + divaNumber + "\"}]]&aqe=[]&aq2=[[]]&onlyFullText=false&noOfRows=2&sortOrder=title_sort_asc";
+
+            URL obj = new URL(url2);
+            HttpURLConnection con = (HttpURLConnection) obj.openConnection();
+
+            // optional default is GET
+            con.setRequestMethod("GET");
+
+            //add request header
+            con.setRequestProperty("User-Agent", "Mozilla/5.0");
+
+            int responseCode = con.getResponseCode();
+            System.out.println("\nSending 'GET' request to URL : " + url2);
+            System.out.println("Response Code : " + responseCode);
+
+            if (responseCode == 500)
+                out.write("DiVA svarade med \"Internal Server Error 500\". Har du angivit ett diva2-id som ej existerar?");
+
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(con.getInputStream()));
+            String inputLine;
+
+            StringBuffer dataBackFromDivaServer = new StringBuffer();
+
+            while ((inputLine = in.readLine()) != null) {
+                dataBackFromDivaServer.append(inputLine);
+            }
+            in.close();
+            con.disconnect();
+
+            //print result
+            Record record = ModsOnlineParser.parse(dataBackFromDivaServer.toString());
+
+            if (record == null) {
+
+                out.append("DiVA returnerade ingen data. Kontrollera angivet diva2-id (skicka en buggrapport om du angivit ett giltigt diva2-id)");
+            }
+
+            //return "Title: " + record.getTitle() + " Supported language: " + record.containsSupportedLanguageText() +"\n\n" + record.toString();
+
+            StringBuilder builder = new StringBuilder();
+
+            builder.append("<p>Titel: ").append(record.getTitle()).append("<br>");
+            //builder.append("innehåller svensk text: ").append(record.isContainsSwedish()).append("<br>");
+            //builder.append("innehåller engelsk text: ").append(record.isContainsEnglish()).append("<br>");
+            builder.append("<br>");
+            //builder.append("Full record: ").append("<br>");
+            //builder.append(record.toString());
+            builder.append("Förslag:").append("<br>");
+            builder.append("</p>");
+
+
+            SparseVector vec = null;
+
+            if (record.isContainsEnglish()) {
+
+                //use english level 5
+                vec = this.englishLevel5.getVecForUnSeenRecord(record);
+
+                if (vec != null) {
+
+                    vec.normalize();
+                    int nnz = vec.nnz();
+                    //builder.append( this.englishLevel5.printSparseVector(vec)  );
+                    // builder.append("nnz:" + nnz);
+
+                    CategoricalResults result = this.classifierlevel5eng.classify(new DataPoint(vec));
+
+                    int hsv = result.mostLikely();
+                    double prob = result.getProb(hsv);
+
+                    ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
+
+                    builder.append("<p>");
+                    builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
+                    builder.append("</p>");
+
+
+                    Vec probabilities = result.getVecView();
+                    List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+                    for (int i = 0; i < probabilities.length(); i++) {
+
+                        if (i == hsv) continue;
+
+                        if (probabilities.get(i) > 0.2) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+
+
+                    }
+
+                    Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+
+                    for (int i = 0; i < classProbPairs.size(); i++) {
+
+                        ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                        double probability = classProbPairs.get(i).probability;
+                        builder.append("<p>");
+                        builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                        builder.append("</p>");
+
+
+                    }
+
+                    //builder.append(result.getVecView());
+
+
+                }
+
+
+            } else if (record.isContainsSwedish()) {
+
+                vec = this.swedishLevel3.getVecForUnSeenRecord(record);
+
+                if (vec != null) {
+
+                    vec.normalize();
+                    int nnz = vec.nnz();
+                    // builder.append("nnz:" + nnz);
+                    //builder.append( this.swedishLevel3.printSparseVector(vec)  );
+
+                    CategoricalResults result = this.classifierLevel3swe.classify(new DataPoint(vec));
+
+                    int hsv = result.mostLikely();
+                    double prob = result.getProb(hsv);
+                    ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(hsv));
+
+                    builder.append("<p>");
+                    builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
+                    builder.append("</p>");
+
+
+                    Vec probabilities = result.getVecView();
+                    List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+                    for (int i = 0; i < probabilities.length(); i++) {
+
+                        if (i == hsv) continue;
+
+                        if (probabilities.get(i) > 0.25) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+
+
+                    }
+
+                    Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+
+                    for (int i = 0; i < classProbPairs.size(); i++) {
+
+                        ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                        double probability = classProbPairs.get(i).probability;
+                        builder.append("<p>");
+                        builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                        builder.append("</p>");
+
+
+                    }
+
+
+                    //builder.append(result.getVecView());
+                }
+            }
+
+
+             out.append( builder.toString() );
+
+        } else {
+
+            out.write("Förefaller inte vara ett giltigt diva2-id.");
+
+        }
+    }
+
+
+
+
+
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -366,20 +565,20 @@ public class ClarivateServlet extends HttpServlet {
 
             clearMap(request,response);
 
+        } else if(uri.endsWith("/fetchId")) {
+
+            try {
+                sendRequestToDivaAndClassify(request,response);
+            } catch (XMLStreamException e) {
+                e.printStackTrace();
+            }
         }
 
 
 
     }
 
-    /**
-     * Handles the HTTP <code>POST</code> method.
-     *
-     * @param request servlet request
-     * @param response servlet response
-     * @throws ServletException if a servlet-specific error occurs
-     * @throws IOException if an I/O error occurs
-     */
+
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
@@ -505,7 +704,6 @@ public class ClarivateServlet extends HttpServlet {
 
 
     }
-
 
 
     protected String generateDownloadLink(long key, List<ClarivateRecord> records ) {
