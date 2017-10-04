@@ -78,7 +78,7 @@ import static cc.org.web.ClarivateToJsat.printSparseVector;
 
 public class ClarivateServlet extends HttpServlet {
 
-    private final String regex = "diva2:\\d{1,20}";
+    private final String regex = "\\d{3,15}";
 
     private final Pattern r = Pattern.compile(regex);
 
@@ -235,11 +235,11 @@ public class ClarivateServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         response.setHeader("Content-Disposition","attachment; filename=resultat.txt");
 
-        String stringID = request.getParameter("id");
+        String keyForGettingSavedResult = request.getParameter("id");
 
         Long id = null;
         try {
-            id = Long.valueOf(stringID);
+            id = Long.valueOf(keyForGettingSavedResult);
         } catch(NumberFormatException e) {
 
             id = null;
@@ -370,9 +370,10 @@ public class ClarivateServlet extends HttpServlet {
             divaNumber = m.group(0);
         }
 
+        String diva2 = "diva2:";
         if(divaNumber != null) {
 
-            String url2 = "http://www.diva-portal.org/smash/export.jsf?format=mods&aq=[[{\"publicationId\":\"" + divaNumber + "\"}]]&aqe=[]&aq2=[[]]&onlyFullText=false&noOfRows=2&sortOrder=title_sort_asc";
+            String url2 = "http://www.diva-portal.org/smash/export.jsf?format=mods&aq=[[{\"publicationId\":\"" + diva2.concat(divaNumber) + "\"}]]&aqe=[]&aq2=[[]]&onlyFullText=false&noOfRows=2&sortOrder=title_sort_asc";
 
             URL obj = new URL(url2);
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
@@ -390,8 +391,7 @@ public class ClarivateServlet extends HttpServlet {
             if (responseCode == 500)
                 out.write("DiVA svarade med \"Internal Server Error 500\". Har du angivit ett diva2-id som ej existerar?");
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream()));
+            BufferedReader in = new BufferedReader( new InputStreamReader(con.getInputStream(),StandardCharsets.UTF_8));
             String inputLine;
 
             StringBuffer dataBackFromDivaServer = new StringBuffer();
@@ -591,7 +591,7 @@ public class ClarivateServlet extends HttpServlet {
 
         // gets absolute path of the web application
 
-        String appPath = request.getServletContext().getRealPath("");
+      //  String appPath = request.getServletContext().getRealPath("");
         final Part filePart = request.getPart("uploadFile"); //TODO check null
 
         boolean continueParsing = isTextPlain(filePart); // true if text/plain, false if null or not text/plain
