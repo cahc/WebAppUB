@@ -1,0 +1,12 @@
+<component name="libraryTable">
+  <library name="msgparser-1.15">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/msgparser-1.15.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/poi-3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/poi-scratchpad-3.9.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/junit-3.8.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>

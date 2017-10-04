@@ -10,6 +10,7 @@
         <element id="dir-copy" path="$PROJECT_DIR$/WebStuff" />
         <element id="directory" name="lib">
           <element id="file-copy" path="$PROJECT_DIR$/lib/ClassyOct2017.jar" />
+          <element id="library" level="project" name="msgparser-1.15" />
         </element>
       </element>
       <element id="directory" name="resources">

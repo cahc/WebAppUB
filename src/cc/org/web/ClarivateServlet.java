@@ -17,23 +17,9 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.*;
 
-
-
-/**
- * Created by crco0001 on 10/2/2017.
- */
-
-import java.io.BufferedReader;
-
-import java.io.File;
-
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
+import com.auxilii.msgparser.*;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -590,27 +576,30 @@ public class ClarivateServlet extends HttpServlet {
 
         response.setContentType("text/html; charset=UTF-8");
         response.setCharacterEncoding("UTF-8");
-
+        boolean continueParsing = false;
 
         // gets absolute path of the web application
+        //  String appPath = request.getServletContext().getRealPath("");
 
-      //  String appPath = request.getServletContext().getRealPath("");
         final Part filePart = request.getPart("uploadFile"); //TODO check null
 
         String specifiedUploadFileType = request.getParameter("CustomField1");
 
         System.out.println("uploaded file of type..: " + specifiedUploadFileType); // write to logg for debugging
 
-        boolean continueParsing = isTextPlain(filePart); // true if text/plain, false if null or not text/plain
+        System.out.println("uploaded size: " + filePart.getSize() );
+
+        if (filePart.getSize() >= 10) continueParsing = true;
+
+        //boolean continueParsing = isTextPlain(filePart); // true if text/plain, false if null or not text/plain
 
         PrintWriter w = response.getWriter();
 
 
+        if (continueParsing) {
 
-        if(continueParsing) {
-
-           // final String fileName = filePart.getSubmittedFileName();
-          //  final String contentType = filePart.getContentType();
+            //final String fileName = filePart.getSubmittedFileName();
+            //  final String contentType = filePart.getContentType();
 
             //ServletOutputStream out = response.getOutputStream();
             //out.write("MY-UTF-8 CODE".getBytes("UTF-8"));
@@ -621,96 +610,103 @@ public class ClarivateServlet extends HttpServlet {
             //  w.println("The type is: " + contentType);
 
             InputStream data = filePart.getInputStream();
+            BufferedReader br = null;
+            String setupInfo = "";
+
+            if ("Outlook-meddelande (unicode)".equals(specifiedUploadFileType)) {
+
+                //outlook parser
+
+                try {
 
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(data, StandardCharsets.UTF_8));
+                    MsgParser msgp = new MsgParser();
+                    Message msg = msgp.parseMsg(data);
 
+                    InputStream body = new ByteArrayInputStream(msg.getBodyText().getBytes("UTF-8")); //TODO specify charSet in getBytes?
+                    br = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));
+                } catch (Exception e) {
 
-            String line;
-            boolean isClarivateData = false;
-            while( (line = br.readLine()) != null) {
-
-                isClarivateData = ClarivateParser.identifierFound(line);
-                if(isClarivateData) break;
-
-                //w.println(line);
-            }
-
-
-
-
-
-
-
-
-
-            if(isClarivateData) {
-                w.print("<BR/>");
-
-                w.print("<p>This is a valid export file from Clarivate Analytics</p>");
-
-                //continute with parsing
-
-                ClarivateParser clarivateParser = new ClarivateParser(br);
-
-                List<ClarivateRecord> recordList = clarivateParser.parse();
-
-                w.println("<p>Number of records parsed: " +  recordList.size() +"</p>");
-
-                for(int i=0; i<recordList.size(); i++) {
-
-                    //    ClarivateRecord record = recordList.get(i);
-
-                    //     w.println("<p>" + record.title + " " + record.UT +"</p>" );
-
-                    //      w.println("<p>" + record.toString() +"</p>" );
-                    //       w.println("<BR/>");
+                    setupInfo = "Outlook parser failed! " + e.getLocalizedMessage();
 
                 }
 
-                w.println("<p>" +recordList.size() + " poster klassificerade</p>");
+
+            } else if ("Web of Science (plain text/full record)".equals(specifiedUploadFileType)) {
+
+                try {
+                    br = new BufferedReader(new InputStreamReader(data, StandardCharsets.UTF_8));
+                } catch (Exception e) {
 
 
-
-                long key = this.random.nextLong();
-
-                w.println(generateDownloadLink(key,recordList));
-
-
-
-                br.close();
+                    setupInfo = "Web of Science parser failed! " + e.getLocalizedMessage();
+                }
 
 
             } else {
 
-                w.println("<BR/>");
-                w.print("<p>You uploaded a text/plain file but not a valid export file from Clarivate. Check again?</p>");
-                br.close();
+                //nothing here..
+
             }
 
 
+            if (br != null) {
 
 
+                String line;
+                boolean isClarivateData = false;
+                while ((line = br.readLine()) != null) {
+
+                    isClarivateData = ClarivateParser.identifierFound(line);
+                    if (isClarivateData) break;
+
+                    //w.println(line);
+                }
 
 
+                if (isClarivateData) {
+
+                    //continute with parsing
+
+                    ClarivateParser clarivateParser = new ClarivateParser(br);
+
+                    List<ClarivateRecord> recordList = clarivateParser.parse();
+
+                    w.println("<p>Antal poster behandlade : " + recordList.size() + "</p>");
+
+
+                    long key = this.random.nextLong();
+
+                    w.println(generateDownloadLink(key, recordList));
+
+
+                    br.close();
+
+
+                } else {
+
+                    w.println("<BR/>");
+                    w.print("<p>Uppladdad fil ej igenkänd som en export-fil från Clarivate analytics. Kontrollera att specificerad typ (outlook/plain text) är korrekt.</p>");
+                    br.close();
+                }
+
+
+                w.flush();
+                w.close();
+
+            } else {
+
+                //br was null
+
+                w.println( setupInfo );
+            }
 
         } else {
 
-            w.println("<BR>");
-            w.println("<p>The uploaded file must be of type text/plain.</p>");
-            w.flush();
-            w.close();
+
+            w.println("Ingen fil vald..");
+
         }
-
-
-
-
-
-
-
-        w.flush();
-        w.close();
-
 
 
     }
