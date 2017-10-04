@@ -39,8 +39,11 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
                 // Create an FormData object
                 var data = new FormData(form);
 
+                var filetype=$( "#typavfil" ).val();
+
+
                 // If you want to add an extra field for the FormData
-                data.append("CustomField", "This is some extra data, testing");
+                data.append("CustomField1", filetype);
 
                 // disabled the submit button
                 $("#btnSubmit").prop("disabled", true);
@@ -204,6 +207,13 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
         <p>Ladda upp en export-fil från Clarivate Analytics för batch-klassificering av poster: </p>
 
         <input type="file" class="filestyle" data-buttonText="Välj fil (max 200 MB)" name="uploadFile">
+
+        <select class="form-control" id="typavfil">
+            <option>Outlook-meddelande (unicode)</option>
+            <option>Web of Science (plain text/full record)</option>
+        </select>
+
+
         <input type="submit" value="Ladda upp och klassificera" class="btn btn-primary" id="btnSubmit">
 
     </form>

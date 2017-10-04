@@ -405,148 +405,151 @@ public class ClarivateServlet extends HttpServlet {
             //print result
             Record record = ModsOnlineParser.parse(dataBackFromDivaServer.toString());
 
-            if (record == null) {
+            if (record == null || record.getTitle().size() == 0 ) {
 
-                out.append("DiVA returnerade ingen data. Kontrollera angivet diva2-id (skicka en buggrapport om du angivit ett giltigt diva2-id)");
-            }
-
-            //return "Title: " + record.getTitle() + " Supported language: " + record.containsSupportedLanguageText() +"\n\n" + record.toString();
-
-            StringBuilder builder = new StringBuilder();
-
-            builder.append("<p>Titel: ").append(record.getTitle()).append("<br>");
-            //builder.append("innehåller svensk text: ").append(record.isContainsSwedish()).append("<br>");
-            //builder.append("innehåller engelsk text: ").append(record.isContainsEnglish()).append("<br>");
-            builder.append("<br>");
-            //builder.append("Full record: ").append("<br>");
-            //builder.append(record.toString());
-            builder.append("Förslag:").append("<br>");
-            builder.append("</p>");
+                out.append("DiVA returnerade ingen data. Kontrollera angivet diva2-id");
+            } else {
 
 
-            SparseVector vec = null;
+                //return "Title: " + record.getTitle() + " Supported language: " + record.containsSupportedLanguageText() +"\n\n" + record.toString();
 
-            if (record.isContainsEnglish()) {
+                StringBuilder builder = new StringBuilder();
 
-                //use english level 5
-                vec = this.englishLevel5.getVecForUnSeenRecord(record);
-
-                if (vec != null) {
-
-                    vec.normalize();
-                    int nnz = vec.nnz();
-                    //builder.append( this.englishLevel5.printSparseVector(vec)  );
-                    // builder.append("nnz:" + nnz);
-
-                    CategoricalResults result = this.classifierlevel5eng.classify(new DataPoint(vec));
-
-                    int hsv = result.mostLikely();
-                    double prob = result.getProb(hsv);
-
-                    ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
-
-                    builder.append("<p>");
-                    builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
-                    builder.append("</p>");
+                builder.append("<p>Titel: ").append(record.getTitle()).append("<br>");
+                //builder.append("innehåller svensk text: ").append(record.isContainsSwedish()).append("<br>");
+                //builder.append("innehåller engelsk text: ").append(record.isContainsEnglish()).append("<br>");
+                builder.append("<br>");
+                //builder.append("Full record: ").append("<br>");
+                //builder.append(record.toString());
+                builder.append("Förslag:").append("<br>");
+                builder.append("</p>");
 
 
-                    Vec probabilities = result.getVecView();
-                    List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+                SparseVector vec = null;
 
-                    for (int i = 0; i < probabilities.length(); i++) {
+                if (record.isContainsEnglish()) {
 
-                        if (i == hsv) continue;
+                    //use english level 5
+                    vec = this.englishLevel5.getVecForUnSeenRecord(record);
 
-                        if (probabilities.get(i) > 0.2) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+                    if (vec != null) {
 
+                        vec.normalize();
+                        int nnz = vec.nnz();
+                        //builder.append( this.englishLevel5.printSparseVector(vec)  );
+                        // builder.append("nnz:" + nnz);
 
-                    }
+                        CategoricalResults result = this.classifierlevel5eng.classify(new DataPoint(vec));
 
-                    Collections.sort(classProbPairs, Comparator.reverseOrder());
+                        int hsv = result.mostLikely();
+                        double prob = result.getProb(hsv);
 
+                        ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
 
-                    for (int i = 0; i < classProbPairs.size(); i++) {
-
-                        ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
-                        double probability = classProbPairs.get(i).probability;
                         builder.append("<p>");
-                        builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                        builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
                         builder.append("</p>");
 
 
-                    }
+                        Vec probabilities = result.getVecView();
+                        List<ClassProbPair> classProbPairs = new ArrayList<>(5);
 
-                    //builder.append(result.getVecView());
+                        for (int i = 0; i < probabilities.length(); i++) {
 
+                            if (i == hsv) continue;
 
-                }
-
-
-            } else if (record.isContainsSwedish()) {
-
-                vec = this.swedishLevel3.getVecForUnSeenRecord(record);
-
-                if (vec != null) {
-
-                    vec.normalize();
-                    int nnz = vec.nnz();
-                    // builder.append("nnz:" + nnz);
-                    //builder.append( this.swedishLevel3.printSparseVector(vec)  );
-
-                    CategoricalResults result = this.classifierLevel3swe.classify(new DataPoint(vec));
-
-                    int hsv = result.mostLikely();
-                    double prob = result.getProb(hsv);
-                    ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(hsv));
-
-                    builder.append("<p>");
-                    builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
-                    builder.append("</p>");
+                            if (probabilities.get(i) > 0.2)
+                                classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
 
 
-                    Vec probabilities = result.getVecView();
-                    List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+                        }
 
-                    for (int i = 0; i < probabilities.length(); i++) {
+                        Collections.sort(classProbPairs, Comparator.reverseOrder());
 
-                        if (i == hsv) continue;
 
-                        if (probabilities.get(i) > 0.25) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+                        for (int i = 0; i < classProbPairs.size(); i++) {
+
+                            ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                            double probability = classProbPairs.get(i).probability;
+                            builder.append("<p>");
+                            builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                            builder.append("</p>");
+
+
+                        }
+
+                        //builder.append(result.getVecView());
 
 
                     }
 
-                    Collections.sort(classProbPairs, Comparator.reverseOrder());
 
+                } else if (record.isContainsSwedish()) {
 
-                    for (int i = 0; i < classProbPairs.size(); i++) {
+                    vec = this.swedishLevel3.getVecForUnSeenRecord(record);
 
-                        ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
-                        double probability = classProbPairs.get(i).probability;
+                    if (vec != null) {
+
+                        vec.normalize();
+                        int nnz = vec.nnz();
+                        // builder.append("nnz:" + nnz);
+                        //builder.append( this.swedishLevel3.printSparseVector(vec)  );
+
+                        CategoricalResults result = this.classifierLevel3swe.classify(new DataPoint(vec));
+
+                        int hsv = result.mostLikely();
+                        double prob = result.getProb(hsv);
+                        ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(hsv));
+
                         builder.append("<p>");
-                        builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                        builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
                         builder.append("</p>");
 
 
+                        Vec probabilities = result.getVecView();
+                        List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+                        for (int i = 0; i < probabilities.length(); i++) {
+
+                            if (i == hsv) continue;
+
+                            if (probabilities.get(i) > 0.25)
+                                classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+
+
+                        }
+
+                        Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+
+                        for (int i = 0; i < classProbPairs.size(); i++) {
+
+                            ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                            double probability = classProbPairs.get(i).probability;
+                            builder.append("<p>");
+                            builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                            builder.append("</p>");
+
+
+                        }
+
+
+                        //builder.append(result.getVecView());
                     }
-
-
-                    //builder.append(result.getVecView());
                 }
+
+
+                out.append(builder.toString());
+
             }
-
-
-             out.append( builder.toString() );
-
         } else {
 
             out.write("Förefaller inte vara ett giltigt diva2-id.");
 
         }
+
+
     }
-
-
-
 
 
 
@@ -593,6 +596,10 @@ public class ClarivateServlet extends HttpServlet {
 
       //  String appPath = request.getServletContext().getRealPath("");
         final Part filePart = request.getPart("uploadFile"); //TODO check null
+
+        String specifiedUploadFileType = request.getParameter("CustomField1");
+
+        System.out.println("uploaded file of type..: " + specifiedUploadFileType); // write to logg for debugging
 
         boolean continueParsing = isTextPlain(filePart); // true if text/plain, false if null or not text/plain
 
