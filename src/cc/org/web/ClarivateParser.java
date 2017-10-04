@@ -23,6 +23,7 @@ import java.util.List;
 public class ClarivateParser {
 
     final static String IDENTIFIER_EXPORTED = "FN Clarivate Analytics Web of Science";
+    final static String IDENTIFIER_EXPORTED2 = "FN Thomson Reuters Web of Science";
     final static String IDENTIFIER_EMAILED = "FN ISI Export Format";
     final static int READ_AHEAD_LIMIT = 1048576; // 1MB
     private final List<ClarivateRecord> recordList = new ArrayList<>();
@@ -425,7 +426,7 @@ public class ClarivateParser {
 
     public static boolean identifierFound(String s) {
 
-        return s.contains(IDENTIFIER_EXPORTED) || s.contains(IDENTIFIER_EMAILED);
+        return s.contains(IDENTIFIER_EXPORTED) || s.contains(IDENTIFIER_EMAILED) || s.contains(IDENTIFIER_EXPORTED2);
 
 
     }
