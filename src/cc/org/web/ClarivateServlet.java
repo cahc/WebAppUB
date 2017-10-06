@@ -114,7 +114,7 @@ public class ClarivateServlet extends HttpServlet {
 
         try {
             this.servletConfig = config;
-            this.newLine = "\n".getBytes("UTF-8");
+            this.newLine = "\r\n".getBytes("UTF-8");
         } catch (UnsupportedEncodingException ex) {
             Logger.getLogger(ClarivateServlet.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -295,7 +295,10 @@ public class ClarivateServlet extends HttpServlet {
                 ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
 
                 StringBuilder bestGuess = new StringBuilder("UKÄ/SCB: " + true_hsv.getCode() + " : " + true_hsv.getEng_description().replaceAll("-->", "→") + " (probability: " + df.format(prob) + ")");
+                byte[] sendThis = bestGuess.toString().getBytes("UTF-8");
 
+                os.write(sendThis);
+                os.write(newLine);
 
                 //Also suggest other categories?
 
@@ -317,15 +320,15 @@ public class ClarivateServlet extends HttpServlet {
 
                     ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
                     double probability = classProbPairs.get(i).probability;
-                    bestGuess.append("\n");
-                    bestGuess.append("UKÄ/SCB: " + true_hsv2.getCode() + " : " + true_hsv2.getEng_description().replaceAll("-->", "→") + " (probability: " + df.format(probability) + ")");
 
+                    String extra = ("UKÄ/SCB: " + true_hsv2.getCode() + " : " + true_hsv2.getEng_description().replaceAll("-->", "→") + " (probability: " + df.format(probability) + ")");
+
+                    sendThis = extra.toString().getBytes("UTF-8");
+                    os.write(sendThis);
+                    os.write(newLine);
 
                 }
 
-
-                byte[] sendThis = bestGuess.toString().getBytes("UTF-8");
-                os.write(sendThis);
                 os.write(newLine);
                 os.write(newLine);
 
