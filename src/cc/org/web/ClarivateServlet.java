@@ -646,7 +646,7 @@ public class ClarivateServlet extends HttpServlet {
             BufferedReader br = null;
             String setupInfo = "";
 
-            if ("Outlook-meddelande (unicode)".equals(specifiedUploadFileType)) {
+            if ("Outlook-meddelandeformat (unicode)".equals(specifiedUploadFileType)) {
 
                 //outlook parser
 
@@ -660,7 +660,7 @@ public class ClarivateServlet extends HttpServlet {
                     br = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));
                 } catch (Exception e) {
 
-                    setupInfo = "Kontrollera att uppladdad fil verkligen är ett sparat outlook-meddelande. (" + e.getLocalizedMessage() +")";
+                    setupInfo = "Kontrollera att uppladdad fil verkligen är i outlook-meddelandeformat. (" + e.getLocalizedMessage() +")";
 
                 }
 
