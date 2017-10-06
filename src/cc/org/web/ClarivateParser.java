@@ -85,7 +85,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                titleBuilder.append(peekNextLine);
+                                titleBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -159,7 +159,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                seriesBuilder.append(peekNextLine);
+                                seriesBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -222,7 +222,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                keywordBuilder.append(peekNextLine);
+                                keywordBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -258,7 +258,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                authorBuilder.append(peekNextLine);
+                                authorBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -295,7 +295,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                subCatBuilder.append(peekNextLine);
+                                subCatBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -332,7 +332,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                authAndAffilBuilder.append(peekNextLine);
+                                authAndAffilBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
@@ -372,7 +372,7 @@ public class ClarivateParser {
 
                             if(peekNextLine.startsWith("   ")) {
                                 //title is over multiple lines
-                                summaryBuilder.append(peekNextLine);
+                                summaryBuilder.append(peekNextLine.substring(2));
                                 this.reader.mark(READ_AHEAD_LIMIT);
 
                             } else {
