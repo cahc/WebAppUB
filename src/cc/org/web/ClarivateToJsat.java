@@ -6,6 +6,7 @@ import SwePub.Record;
 import jsat.linear.IndexValue;
 import jsat.linear.SparseVector;
 import misc.LanguageTools.HelperFunctions;
+import misc.LanguageTools.LanguageGuesser;
 import misc.LanguageTools.RemoveCopyRightFromAbstract;
 import misc.Parsers.SimpleParser;
 import misc.Stemmers.EnglishStemmer;
@@ -166,6 +167,7 @@ public class ClarivateToJsat {
         stringbuilder.append("]");
         return stringbuilder.toString();
     }
+
 
     public static List<String> extractTermsFromClarivateRecord(ClarivateRecord record) {
 

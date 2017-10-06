@@ -4,6 +4,9 @@ package cc.org.web;
  * Created by crco0001 on 10/2/2017.
  */
 
+import misc.LanguageTools.LanguageGuesser;
+import misc.LanguageTools.RemoveCopyRightFromAbstract;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -199,6 +202,25 @@ public class ClarivateRecord {
 
 
 
+
+    public String guessLanguage() {
+
+
+        if(getLanguage() != null && "English".equals(getLanguage()) ) return "en";
+
+        //else try to guess what it is..
+
+        String text = getTitle();
+        if(getSummary() != null) {
+
+            String cleanedAbstract = RemoveCopyRightFromAbstract.cleanedAbstract( getSummary() );
+
+            text = text.concat(" ").concat( cleanedAbstract );
+        }
+
+        return LanguageGuesser.getLanguage(text);
+
+    }
 
 
 

@@ -396,12 +396,6 @@ public class ClarivateParser {
 
 
 
-
-
-
-
-
-
                 } //inner while loop, i.e., record loop
 
 

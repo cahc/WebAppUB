@@ -249,15 +249,29 @@ public class ClarivateServlet extends HttpServlet {
 
         for(ClarivateRecord record : listOfProcessedRecords) {
 
-            byte[] sendThis = record.toString().getBytes("UTF-8");
-            os.write(sendThis);
-            os.write(newLine);
+           // byte[] sendThis = record.toString().getBytes("UTF-8");
+           // os.write(sendThis);
+          //  os.write(newLine);
 
             List<String> termsForClassifications = extractTermsFromClarivateRecord(record);
 
-            byte[] sendThis2 = termsForClassifications.toString().getBytes("UTF-8");
-            os.write(sendThis2);
+            String language = record.guessLanguage();
+
+            boolean supported_language = false;
+            if("en".equals(language)) supported_language = true;
+
+            byte[] sendBasic = record.getUT().concat(" ").concat( record.getTitle()).getBytes("UTF-8");
+            os.write(sendBasic);
             os.write(newLine);
+
+           // byte[] sendLanguageGuess = language.getBytes("UTF-8");
+           // os.write(sendLanguageGuess);
+           // os.write(newLine);
+
+
+          //  byte[] sendThis2 = termsForClassifications.toString().getBytes("UTF-8");
+          //  os.write(sendThis2);
+          //  os.write(newLine);
 
             //byte[] sendThis5 = record.getAddressParts().toString().getBytes("UTF-8");
             //os.write(sendThis5);
@@ -265,61 +279,80 @@ public class ClarivateServlet extends HttpServlet {
 
 
             //can be nnz == 0
-            SparseVector sparseVector = getSparseVectorEngLevel5(termsForClassifications);
 
-            sparseVector.normalize();
-            int nnz = sparseVector.nnz();
+            if(supported_language) {
+                SparseVector sparseVector = getSparseVectorEngLevel5(termsForClassifications);
 
-            //classify
+                sparseVector.normalize();
+                int nnz = sparseVector.nnz();
 
-            CategoricalResults result = this.classifierlevel5eng.classify( new DataPoint(sparseVector) );
+                //classify
 
-            int hsv = result.mostLikely();
-            double prob = result.getProb(hsv);
-            ClassificationCategory true_hsv =  HsvCodeToName.getCategoryInfo( IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv)    );
+                CategoricalResults result = this.classifierlevel5eng.classify(new DataPoint(sparseVector));
 
-            StringBuilder bestGuess = new StringBuilder("UKÄ/SCB: " + true_hsv.getCode() + " : " + true_hsv.getEng_description().replaceAll("-->","→") +  " (probability: " + df.format(prob) +")");
+                int hsv = result.mostLikely();
+                double prob = result.getProb(hsv);
+                ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
+
+                StringBuilder bestGuess = new StringBuilder("UKÄ/SCB: " + true_hsv.getCode() + " : " + true_hsv.getEng_description().replaceAll("-->", "→") + " (probability: " + df.format(prob) + ")");
 
 
-            //Also suggest other categories?
+                //Also suggest other categories?
 
-            Vec probabilities = result.getVecView();
-            List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+                Vec probabilities = result.getVecView();
+                List<ClassProbPair> classProbPairs = new ArrayList<>(5);
 
-            for(int i=0; i < probabilities.length(); i++) {
+                for (int i = 0; i < probabilities.length(); i++) {
 
-                if(i == hsv) continue;
+                    if (i == hsv) continue;
 
-                if(probabilities.get(i) > 0.2) classProbPairs.add( new ClassProbPair(i,probabilities.get(i)));
+                    if (probabilities.get(i) > 0.2) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
 
+
+                }
+
+                Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+                for (int i = 0; i < classProbPairs.size(); i++) {
+
+                    ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                    double probability = classProbPairs.get(i).probability;
+                    bestGuess.append("\n");
+                    bestGuess.append("UKÄ/SCB: " + true_hsv2.getCode() + " : " + true_hsv2.getEng_description().replaceAll("-->", "→") + " (probability: " + df.format(probability) + ")");
+
+
+                }
+
+
+                byte[] sendThis = bestGuess.toString().getBytes("UTF-8");
+                os.write(sendThis);
+                os.write(newLine);
+                os.write(newLine);
+
+
+
+            } else {
+
+                //not supported language
+                StringBuilder bestGuess = new StringBuilder("UKÄ/SCB: SPRÅKET STÖDS EJ, INGET FÖRSÖK ATT KLASSIFICERA POSTEN HAR GJORTS!");
+                byte[] sendThis = bestGuess.toString().getBytes("UTF-8");
+                os.write(sendThis);
+                os.write(newLine);
+                os.write(newLine);
 
             }
-
-            Collections.sort(classProbPairs, Comparator.reverseOrder());
-
-            for(int i=0; i<classProbPairs.size(); i++) {
-
-                ClassificationCategory true_hsv2 =  HsvCodeToName.getCategoryInfo( IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get( classProbPairs.get(i).classCode   )    );
-                double probability = classProbPairs.get(i).probability;
-                bestGuess.append("\n");
-                bestGuess.append("UKÄ/SCB: " + true_hsv2.getCode() + " : " + true_hsv2.getEng_description().replaceAll("-->","→") +  " (probability: " + df.format(probability) +")");
-
-
-            }
-
-
 
             //Stringy
-            String sparseVectorString = printSparseVector(sparseVector);
+         //   String sparseVectorString = printSparseVector(sparseVector);
 
-            byte[] sendThis3 = sparseVectorString.toString().getBytes("UTF-8");
-            os.write(sendThis3);
-            os.write(newLine);
+        //    byte[] sendThis3 = sparseVectorString.toString().getBytes("UTF-8");
+        //    os.write(sendThis3);
+       //     os.write(newLine);
 
-            byte[] sendThis4 = bestGuess.toString().getBytes("UTF-8");
-            os.write(sendThis4);
-            os.write(newLine);
-            os.write(newLine);
+         //   byte[] sendThis4 = bestGuess.toString().getBytes("UTF-8");
+        //    os.write(sendThis4);
+           // os.write(newLine);
+          //  os.write(newLine);
         }
 
 
@@ -627,7 +660,7 @@ public class ClarivateServlet extends HttpServlet {
                     br = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));
                 } catch (Exception e) {
 
-                    setupInfo = "Outlook parser failed! " + e.getLocalizedMessage();
+                    setupInfo = "Kontrollera att uppladdad fil verkligen är ett sparat outlook-meddelande. (" + e.getLocalizedMessage() +")";
 
                 }
 
@@ -655,11 +688,12 @@ public class ClarivateServlet extends HttpServlet {
 
                 String line;
                 boolean isClarivateData = false;
-                while ((line = br.readLine()) != null) {
+                int maxRowsConsidered = 500;
+                while ((line = br.readLine()) != null && maxRowsConsidered > 0) {
 
                     isClarivateData = ClarivateParser.identifierFound(line);
                     if (isClarivateData) break;
-
+                    maxRowsConsidered--;
                     //w.println(line);
                 }
 
@@ -686,7 +720,7 @@ public class ClarivateServlet extends HttpServlet {
                 } else {
 
                     w.println("<BR/>");
-                    w.print("<p>Uppladdad fil ej igenkänd som en export-fil från Clarivate analytics. Kontrollera att specificerad typ (outlook/plain text) är korrekt.</p>");
+                    w.print("<p>Uppladdad fil ej igenkänd som en export-fil från Web of Science.</p>");
                     br.close();
                 }
 
