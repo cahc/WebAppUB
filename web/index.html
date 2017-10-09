@@ -12,7 +12,7 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-
+    <meta name="description" content="automatisk klassificera bibliografiska poster forskningsämnen forskningsämnesgrupp forskningsämnesområde SCB UKÄ automatisk klassifikator">
 
     <title>Ämnesklassificering (SCB/UKÄ)<</title>
 
@@ -23,6 +23,16 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
     <link rel="stylesheet" type="text/css" href="resources/hello.css">
 
     <script type="text/javascript" src="resources/bootstrap-filestyle.min.js"></script>
+
+    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-98084539-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-98084539-1');
+    </script>
 
 
     <script>
@@ -156,7 +166,7 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
                     <p>(4) isbn-prefix/förlag</p>
                     <p>(5) affilieringar</p>
                     <p></p>
-                    <p>En post från DiVA behöver inte innehålla information från samtliga informationskällor (1)-(5) men mer information ger i regel säkrare klassificeringar. Posten måste dock innehålla information från (1) annars görs inget försök att klassificera posten.</p>
+                    <p>En bibliografisk post behöver inte innehålla information från samtliga informationskällor (1)-(5) men mer information ger i regel säkrare klassificeringar. Posten måste dock innehålla information från (1) annars görs inget försök att klassificera posten.</p>
                     <p>Poster från SwePub utgör träningsdata (augusti 2017). Endast engelska och svenska stöds. Språk identifieras automatiskt.</p>
 
                     <p>Klassifikatorn tillskriver varje kategori en sannolikhet som är beroende på den aktuella postens innehåll. Summan av sannolikheter över alla kategorier är 1.</p>
@@ -166,7 +176,7 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
                     <p>Dual Coordinate Descent Methods for Logistic Regression and Maximum Entropy Models. doi:0.1007/s10994-010-5221-8</p>
                     <p>Entropy-Based Term Weighting Schemes for Text Categorization in VSM. doi:10.1109/ICTAI.2015.57</p>
 
-                    <p>Buggrapporter mottages tacksamt: cristian.colliander@umu.se</p>
+                    <p>Buggrapporter mottages tacksamt: cristian [dot] colliander [at] umu [dot] se</p>
                     <p>(notera att själva klassificeringen tar millisekunder men att hämta data från slöa DiVA-servrar kan ta flera sekunder..)</p>
                 </div>
                 <div class="modal-footer">
