@@ -27,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 
 import java.text.DecimalFormat;
 
+import java.text.ParseException;
 import java.util.*;
 
 import java.util.logging.Level;
@@ -112,7 +113,23 @@ public class ClarivateServlet extends HttpServlet {
 
        String whereAmI = new File(".").getAbsolutePath();
 
-        try {
+
+         String osName = System.getProperty("os.name");
+         boolean isWinDev = false;
+
+         if(osName != null && osName.toLowerCase().contains("windows") )   isWinDev = true;
+
+            String dir = null;
+            if(isWinDev) {
+
+                dir = ("F:\\opt\\models\\");
+            } else{
+
+                dir = ("/opt/models/");
+            }
+
+
+            try {
             this.servletConfig = config;
             this.newLine = "\r\n".getBytes("UTF-8");
         } catch (UnsupportedEncodingException ex) {
@@ -125,9 +142,9 @@ public class ClarivateServlet extends HttpServlet {
 
             swedishLevel3 = new IndexAndGlobalTermWeights("swe", 3);
 
-            englishLevel5.readFromMapDB();
+            englishLevel5.readFromMapDB(dir);
 
-            swedishLevel3.readFromMapDB();
+            swedishLevel3.readFromMapDB(dir);
 
 
 
@@ -142,8 +159,8 @@ public class ClarivateServlet extends HttpServlet {
 
 
         try {
-            this.classifierlevel5eng = TrainAndPredict.HelperFunctions.readSerializedClassifier("classifier.eng.5.ser");
-            this.classifierLevel3swe = TrainAndPredict.HelperFunctions.readSerializedClassifier("classifier.swe.3.ser");
+            this.classifierlevel5eng = TrainAndPredict.HelperFunctions.readSerializedClassifier(dir + "classifier.eng.5.ser");
+            this.classifierLevel3swe = TrainAndPredict.HelperFunctions.readSerializedClassifier(dir + "classifier.swe.3.ser");
 
         } catch (Throwable t) {
             t.printStackTrace();

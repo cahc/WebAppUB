@@ -33,5 +33,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" exported="" name="msgparser-1.15" level="project" />
+    <orderEntry type="library" name="Classy" level="application" />
   </component>
 </module>
