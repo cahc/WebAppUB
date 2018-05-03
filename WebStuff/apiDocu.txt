@@ -1,0 +1,30 @@
+ //curl -F "data=@uploadfile.txt" "http://127.0.0.1:8080/api/v1/wos?key=cristian.colliander@umu.se&multilabelthreshold=0.5"
+ 
+
+POST /api/v1/wos?key=cristian.colliander@umu.se&multilabelthreshold=0.5 HTTP/1.1
+Host: 127.0.0.1:8080
+User-Agent: curl/7.54.0
+Accept: */*
+Content-Length: 2128588
+Expect: 100-continue
+Content-Type: multipart/form-data; boundary=------------------------c79d74d236543b5b
+
+--------------------------c79d74d236543b5b
+Content-Disposition: form-data; name="data"; filename="uploadfile.txt"
+Content-Type: text/plain
+
+FN Clarivate Analytics Web of Science
+VR 1.0
+PT J
+AU Saeid, S
+   Tolvanen, P
+   Kumar, N
+   Eranen, K
+   Peltonen, J
+   Peurla, M
+   Mikkola, JP
+   Franz, A
+   Salmi, T
+...
+...
+...

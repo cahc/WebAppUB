@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="API för automatisk klassificera bibliografiska poster forskningsämnen forskningsämnesgrupp forskningsämnesområde SCB UKÄ automatisk klassifikator">
+
+    <title>API för ämnesklassificering av WoS poster enligt (SCB/UKÄ)</title>
+    <link rel="stylesheet" type="text/css" href="resources/hello.css">
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-98084539-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-98084539-1');
+    </script>
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+
+
+    <style>
+        div.a {
+            text-align: center;
+        }
+
+        div.b {
+            text-align: left;
+        }
+
+        div.c {
+            text-align: right;
+        }
+
+        div.d {
+            text-align: justify;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    </style>
+
+
+</head>
+<body>
+
+<!---   The lang-* class specifies the language file extensions.
+File extensions supported by default include:
+"bsh", "c", "cc", "cpp", "cs", "csh", "cyc", "cv", "htm", "html", "java",
+"js", "m", "mxml", "perl", "pl", "pm", "py", "rb", "sh", "xhtml", "xml",
+"xsl".
+--->
+<img src="resources/api.png" alt="" style="width:10%;">
+<BR/>
+<div class="container">
+<div class="d">
+    <p>I dagsläget erbjuds ett API för klassificering av engelskspråkiga poster från Web of Science [v.5.29]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån). API:et kan exempelvis utgöra ett led i automatiserade importer till den lokal publiceringsdatabasen. En export-fil från WoS i "Plain text/Full record"-format (se <a href="uploadFile.txt">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>http://www.klassificera.ub.umu.se/api/v1</b> varvid en XML-fil komprimerad med <b>Gzip</b> returneras.</p>
+    <p>Utöver själva filen med WoS-poster (<b>data</b>=filnamn.txt) skall två nyckel-värde-par anges: <b>key</b>="epost" samt <b>multilabelthreshold</b>="[0.1,0.51]". Användarens epost-adress anges som värdet på <b>key</b> och <b>multilabelthreshold</b> specificerar ett tröskelvärde i intervallet [0.1,0.51] som styr i vilken utsträckning en post kan klassificeras med mer än ett forskningsämne. Det mest sannolika forskningsämnet returneras alltid, oavsett dess sannolikhetsvärde (se FAQ för undantag). Ett tröskelvärde på, säg 0.1, returnerar  (i förekommande fall och utöver det forskningsämne med högst sannolikhet) alla forskningsämnen vars sannolikhet >= 0.1. Ett tröskelvärde på 0.51 betyder alltså att endast det mest sannolika forskningsämnet returneras per post. </p>
+</div>
+
+    <p>Hur du kommunicerar med API:et är beroende på vilket programmeringsspråk du använder. För att testa API:et utan att behöva skriva kod kan <a href="https://curl.haxx.se">curl</a> användas:</p>
+<pre class="prettyprint lang-bsh">
+  $ curl --compress --form "data=@uploadfile.txt" "http://www.klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
+</pre>
+
+    <p>Enkelt exempel i Java med Apache HttpClient:</p>
+
+<pre class="prettyprint" lang-java>
+//import org.apache [...]
+
+public class HttpClientPlayground {
+  public static void main(String[] arg) throws IOException {
+  if(arg.length != 1) { System.out.println("ange filnamn.."); System.exit(0); }
+
+    File upload = new File(arg[0]); // motsvarande uploadfile.txt i curl-exemplet
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    HttpPost uploadFile = new HttpPost("http://www.klassificera.ub.umu.se/api/v1/wos");
+    MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+    builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN);
+    builder.addTextBody("multilabelthreshold", "0.11", ContentType.TEXT_PLAIN);
+
+    builder.addBinaryBody(
+      "data",
+      new FileInputStream(upload),
+      ContentType.DEFAULT_TEXT,
+      upload.getName()
+    );
+
+    HttpEntity multipart = builder.build();
+    uploadFile.setEntity(multipart);
+    CloseableHttpResponse response = httpClient.execute(uploadFile);
+    HttpEntity responseEntity = response.getEntity();
+
+    System.out.println(response.getStatusLine()); // 200 om OK
+    System.out.println(response.getFirstHeader("Content-Type") ); // text/xml;charset=UTF-8
+
+    //Apache HttpClienten hanterar Gzip automatiskt, vilket nog är fallet med de flesta liknande bibliotek
+    String XML = EntityUtils.toString(response.getEntity(), "UTF-8");
+    EntityUtils.consume(responseEntity);
+
+    //Parsa returnerad XML eller spara till fil..
+
+    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("resultat.txt"),"UTF-8"));
+    out.write(XML);
+    out.flush();
+    out.close();
+
+    }
+}
+</pre>
+
+Servern returnerar en XML-fil med följande (någorlunda självbeskrivande) struktur:
+
+<pre class="prettyprint lang-xml"> <!-- must encode first : https://opinionatedgeek.com/Codecs/HtmlEncoder -->
+&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?&gt;
+&lt;poster&gt;
+&lt;meta&gt;
+ &lt;uploadedRecords&gt;10483&lt;/uploadedRecords&gt;
+ &lt;key&gt;foo.bar@null.se&lt;/key&gt;
+ &lt;multilabelthreshold&gt;0.11&lt;/multilabelthreshold&gt;
+ &lt;errorMessage/&gt;
+&lt;/meta&gt;
+&lt;post UT="000319433800004"&gt;
+ &lt;forskningsämne kod="10614" sannolikhet="0.24"&gt;Utvecklingsbiologi&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="10607" sannolikhet="0.15"&gt;Botanik&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319205900056"&gt;
+ &lt;forskningsämne kod="30110" sannolikhet="0.68"&gt;Immunologi inom det medicinska området&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319683500013"&gt;
+ &lt;forskningsämne kod="30302" sannolikhet="0.55"&gt;Folkhälsovetenskap, global hälsa, socialmedicin och epidemiologi&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="30305" sannolikhet="0.18"&gt;Omvårdnad&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="30303" sannolikhet="0.14"&gt;Arbetsmedicin och miljömedicin&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319852200013"&gt;
+ &lt;forskningsämne kod="40101" sannolikhet="0.55"&gt;Jordbruksvetenskap&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="40103" sannolikhet="0.17"&gt;Livsmedelsvetenskap&lt;/forskningsämne&gt;
+&lt;/post&gt;
+ &lt;post UT="000319863500020"&gt;
+ &lt;forskningsämne kod="10603" sannolikhet="0.15"&gt;Biofysik&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319771700010"&gt;
+ &lt;forskningsämne kod="40104" sannolikhet="0.45"&gt;Skogsvetenskap&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="40106" sannolikhet="0.33"&gt;Markvetenskap&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319401200007"&gt;
+ &lt;forskningsämne kod="30401" sannolikhet="0.31"&gt;Medicinsk bioteknologi (inriktn. mot cellbiologi (inkl. stamcellsbiologi), molekylärbiologi, mikrobiologi, biokemi eller biofarmaci)&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="30213" sannolikhet="0.18"&gt;Gastroenterologi&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="30108" sannolikhet="0.14"&gt;Cell- och molekylärbiologi&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319703600008"&gt;
+ &lt;forskningsämne kod="10608" sannolikhet="0.42"&gt;Zoologi&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="10609" sannolikhet="0.15"&gt;Genetik (medicinsk under 30107 och lantbruksvetenskaplig under 40402)&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="10611" sannolikhet="0.14"&gt;Ekologi&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319550100011"&gt;
+ &lt;forskningsämne kod="30220" sannolikhet="0.71"&gt;Reproduktionsmedicin och gynekologi&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319551600003"&gt;
+ &lt;forskningsämne kod="50202" sannolikhet="0.81"&gt;Företagsekonomi&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319286800009"&gt;
+ &lt;forskningsämne kod="50401" sannolikhet="0.28"&gt;Sociologi (exklusive socialt arbete, socialpsykologi och socialantropologi)&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000319289300013"&gt;
+ &lt;forskningsämne kod="50302" sannolikhet="0.50"&gt;Didaktik&lt;/forskningsämne&gt;
+ &lt;forskningsämne kod="50301" sannolikhet="0.20"&gt;Pedagogik&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;post UT="000318901900006"&gt;
+ &lt;forskningsämne kod="30308" sannolikhet="0.75"&gt;Idrottsvetenskap&lt;/forskningsämne&gt;
+&lt;/post&gt;
+&lt;!-- och så fortsätter det --&gt;
+&lt;/poster&gt;
+</pre>
+
+<BR>
+    <p><b>FAQ</b></p>
+    <p>
+        <i><b>*En post saknar forskningsämne (&lt;post UT="000428587800009"/&gt;), vafalls?</b></i></p>
+    <p>Två fall kan generera avsaknad av klassning: (1) i  exportfilen från WoS specificerar LA-taggen ett annat språk än "English". Den absoluta majoriteten av poster i WoS har ju dock engelsk titel & abstract så detta är ovanligt (2) inga av de extraherade termer från posten återfinns i klassifikatorns vokabulär (som består av 329110 termer), detta torde vara ytterst ovanligt (har ej upplevt det själv).</p>
+
+    <p>
+        <i><b>*Antalet uppladdade poster är fler än vad som returneras, eller ekvivalent, ett lägre värde anges i &lt;uploadedRecords&gt;xxx&lt;/uploadedRecords&gt; än antalet uppladdade poster. Vad är det frågan om!?</b></i>
+    </p>
+
+    <p>Eftersom exportfilen från WoS är i ett enkelt taggat format så är det svår att skilja den från andra filer med liknande format. Därför söks raden "FN Clarivate Analytics Web of Science" och först därefter börjar poster bearbetas. Det är därför viktigt att denna rad återfinns i början av filen.</p>
+
+    <p>
+
+        <i><b>*Servern returnerar "nonsens"/ej en XML-fil!</b></i>
+
+    </p>
+    <p>Överföringen från servern är komprimerad med Gzip vilket måste hanteras på klientsidan (vilket du förmodligen inte gör).</p>
+
+    <p>
+        <i><b>*Begränsningar?</b></i>
+    </p>
+
+    <p>Uppladdad fil får inte överstiga 200MB (jmf: en fil med 10483 poster är drygt 40MB stor och det tar, inklusive upp-och nerladdningstid, ca 40 sekunder att klassificera samtliga poster) </p>
+
+    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support, kontinuerlig uppdatering av underliggande modeller etc. När detta skrivs (maj 2018) har klassifikatorn rullat på felfritt i ca 1 år och modellerna uppdateras ungefär halvårsvis. Avsikten är att det ska fortsätta så.</p>
+</div>
+
+<img src="resources/aCat.png" alt="" style="width:10%;">
+</body>
+</html>

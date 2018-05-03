@@ -107,7 +107,7 @@ public class ClarivateParser {
 
                     if(line2.startsWith("UT ")) {
 
-                        record.setUT( line2.substring(3));
+                        record.setUT(  (line2.substring(3)).replaceAll("[^\\d]", "" )   ) ;
 
 
                     }

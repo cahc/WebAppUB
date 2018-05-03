@@ -38,7 +38,9 @@ import javax.servlet.ServletConfig;
 import javax.servlet.annotation.MultipartConfig;
 import javax.servlet.annotation.WebInitParam;
 import javax.servlet.http.Part;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.stream.XMLStreamException;
+import javax.xml.transform.TransformerException;
 
 import static cc.org.web.ClarivateToJsat.extractTermsFromClarivateRecord;
 import static cc.org.web.ClarivateToJsat.printSparseVector;
@@ -47,7 +49,7 @@ import static cc.org.web.ClarivateToJsat.printSparseVector;
  *
  * @author crco0001
  */
-@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap","/fetchId"},
+@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap","/fetchId","/api/v1/wos","/api/v1/mods"},
 
         initParams =  {@WebInitParam(name = "Admin",value="Apan Ola"),
                 @WebInitParam(name = "Admin2",value="Apan Ola2")
@@ -69,11 +71,11 @@ public class ClarivateServlet extends HttpServlet {
 
     private final Pattern r = Pattern.compile(regex);
 
-    private IndexAndGlobalTermWeights englishLevel5 = null;
+    public static IndexAndGlobalTermWeights englishLevel5 = null;
 
-    private Classifier classifierlevel5eng = null;
+    public static Classifier classifierlevel5eng = null;
 
-    private Classifier classifierLevel3swe = null;
+    public static Classifier classifierLevel3swe = null;
 
     private  IndexAndGlobalTermWeights swedishLevel3 = null;
 
@@ -88,7 +90,7 @@ public class ClarivateServlet extends HttpServlet {
 
     protected byte[] newLine;
 
-    private SparseVector getSparseVectorEngLevel5(List<String> terms) {
+    public static SparseVector getSparseVectorEngLevel5(List<String> terms) {
 
        int vectorSpaceSize =  englishLevel5.getNrTerms();
 
@@ -115,19 +117,29 @@ public class ClarivateServlet extends HttpServlet {
 
 
          String osName = System.getProperty("os.name");
+
+
          boolean isWinDev = false;
+         boolean isMacDev = false;
 
          if(osName != null && osName.toLowerCase().contains("windows") )   isWinDev = true;
+         if(osName != null && osName.toLowerCase().contains("mac os") )   isMacDev = true;
 
             String dir = null;
             if(isWinDev) {
 
                 dir = ("F:\\opt\\models\\");
-            } else{
+            } else if(isMacDev) {
+
+                dir = "/Users/Cristian/models/";
+
+            } else {
+
 
                 dir = ("/opt/models/");
             }
 
+            System.out.println("looking for models in directory: " + dir);
 
             try {
             this.servletConfig = config;
@@ -153,7 +165,7 @@ public class ClarivateServlet extends HttpServlet {
         } catch (Throwable t) {
 
             t.printStackTrace();
-            System.out.println("readFromMapDB throwed some shit!");
+            System.out.println("readFromMapDB throwed some shit!: " + t.getLocalizedMessage() + "" + t.getMessage());
 
         }
 
@@ -602,6 +614,7 @@ public class ClarivateServlet extends HttpServlet {
         if (uri.endsWith("/sendBack")) {
 
             sendFile(request,response);
+
         } else if(uri.endsWith("/mapSize")) {
 
             reportMapSize(request,response);
@@ -627,8 +640,39 @@ public class ClarivateServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        response.setContentType("text/html; charset=UTF-8");
-        response.setCharacterEncoding("UTF-8");
+
+
+        ////////////////CHECK FOR API REQUEST/////////////////
+        String uri = request.getRequestURI();
+
+        //curl -F "data=@uploadfile.txt" "http://127.0.0.1:8080/api/v1/wos?key=cristian.colliander@umu.se&multilabelthreshold=0.5"
+
+
+
+        if (uri.endsWith("/api/v1/wos")) {
+
+            try {
+                ClarivateAPI clarivateAPI = new ClarivateAPI(request,response);
+            } catch (ParserConfigurationException e) {
+                e.printStackTrace();
+            } catch (TransformerException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
+
+
+
+        /////////////////////////////////////////////////
+
+
+        ///////////////FORM REQUEST FROM HTML////////////
+
+
+            response.setContentType("text/html; charset=UTF-8");
+            response.setCharacterEncoding("UTF-8");
         boolean continueParsing = false;
 
         // gets absolute path of the web application

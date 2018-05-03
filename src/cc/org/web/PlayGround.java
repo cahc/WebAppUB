@@ -1,7 +1,12 @@
 package cc.org.web;
 
+import Database.IndexAndGlobalTermWeights;
+import Database.MyOwnException;
 import jsat.linear.SparseVector;
 
+
+import java.io.*;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -10,10 +15,26 @@ import java.util.regex.Pattern;
  */
 public class PlayGround {
 
-    public static void main(String[] arg) {
+    public static void main(String[] arg) throws IOException, MyOwnException {
 
 
-        SparseVector vector = new SparseVector(3);
+      BufferedReader reader = new BufferedReader( new FileReader( new File("/Users/Cristian/Desktop/APIexperiment/wosExportPlainUTF8.txt")));
+
+      ClarivateParser clarivateParser = new ClarivateParser(reader);
+
+      List<ClarivateRecord> recordList = clarivateParser.parse();
+
+      System.out.println(recordList.size());
+
+      System.out.println(  System.getProperty("os.name") );
+
+        IndexAndGlobalTermWeights swedishLevel3 = null;
+
+        swedishLevel3 = new IndexAndGlobalTermWeights("swe", 3);
+
+        swedishLevel3.readFromMapDB("/Users/Cristian/models/");
+
+
 
 
 
