@@ -11,6 +11,7 @@
         <element id="directory" name="lib">
           <element id="library" level="project" name="msgparser-1.15" />
           <element id="library" level="application" name="Classy" />
+          <element id="library" level="project" name="Classy1" />
         </element>
       </element>
       <element id="directory" name="resources">

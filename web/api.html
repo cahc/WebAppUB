@@ -64,13 +64,13 @@ File extensions supported by default include:
 <BR/>
 <div class="container">
 <div class="d">
-    <p>I dagsläget erbjuds ett API för klassificering av engelskspråkiga poster från Web of Science [v.5.29]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån). API:et kan exempelvis utgöra ett led i automatiserade importer till den lokal publiceringsdatabasen. En export-fil från WoS i "Plain text/Full record"-format (se <a href="uploadFile.txt">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>http://www.klassificera.ub.umu.se/api/v1</b> varvid en XML-fil komprimerad med <b>Gzip</b> returneras.</p>
+    <p>I dagsläget erbjuds ett API för klassificering av engelskspråkiga poster från Web of Science [v.5.29]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån). API:et kan exempelvis utgöra ett led i automatiserade importer till den lokal publiceringsdatabasen. En export-fil från WoS i "Plain text/Full record"-format (se <a href="uploadFile.txt">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>http://klassificera.ub.umu.se/api/v1</b> varvid en XML-fil komprimerad med <b>Gzip</b> returneras.</p>
     <p>Utöver själva filen med WoS-poster (<b>data</b>=filnamn.txt) skall två nyckel-värde-par anges: <b>key</b>="epost" samt <b>multilabelthreshold</b>="[0.1,0.51]". Användarens epost-adress anges som värdet på <b>key</b> och <b>multilabelthreshold</b> specificerar ett tröskelvärde i intervallet [0.1,0.51] som styr i vilken utsträckning en post kan klassificeras med mer än ett forskningsämne. Det mest sannolika forskningsämnet returneras alltid, oavsett dess sannolikhetsvärde (se FAQ för undantag). Ett tröskelvärde på, säg 0.1, returnerar  (i förekommande fall och utöver det forskningsämne med högst sannolikhet) alla forskningsämnen vars sannolikhet >= 0.1. Ett tröskelvärde på 0.51 betyder alltså att endast det mest sannolika forskningsämnet returneras per post. </p>
 </div>
 
     <p>Hur du kommunicerar med API:et är beroende på vilket programmeringsspråk du använder. För att testa API:et utan att behöva skriva kod kan <a href="https://curl.haxx.se">curl</a> användas:</p>
 <pre class="prettyprint lang-bsh">
-  $ curl --compress --form "data=@uploadfile.txt" "http://www.klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
+  $ curl --compress --form "data=@uploadfile.txt" "http://klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
 </pre>
 
     <p>Enkelt exempel i Java med Apache HttpClient:</p>
@@ -84,7 +84,7 @@ public class HttpClientPlayground {
 
     File upload = new File(arg[0]); // motsvarande uploadfile.txt i curl-exemplet
     CloseableHttpClient httpClient = HttpClients.createDefault();
-    HttpPost uploadFile = new HttpPost("http://www.klassificera.ub.umu.se/api/v1/wos");
+    HttpPost uploadFile = new HttpPost("http://klassificera.ub.umu.se/api/v1/wos");
     MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
     builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN); //ersätt med din egen epost

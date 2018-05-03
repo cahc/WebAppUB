@@ -6,6 +6,7 @@
       <element id="directory" name="WEB-INF">
         <element id="directory" name="lib">
           <element id="library" level="application" name="Classy" />
+          <element id="library" level="project" name="Classy1" />
         </element>
       </element>
     </root>
