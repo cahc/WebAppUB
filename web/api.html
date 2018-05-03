@@ -87,7 +87,7 @@ public class HttpClientPlayground {
     HttpPost uploadFile = new HttpPost("http://www.klassificera.ub.umu.se/api/v1/wos");
     MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
-    builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN);
+    builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN); //ersätt med din egen epost
     builder.addTextBody("multilabelthreshold", "0.11", ContentType.TEXT_PLAIN);
 
     builder.addBinaryBody(
