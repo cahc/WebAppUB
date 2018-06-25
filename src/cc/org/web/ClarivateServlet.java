@@ -498,7 +498,7 @@ public class ClarivateServlet extends HttpServlet {
                         ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
 
                         builder.append("<p>");
-                        builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
+                        builder.append("<b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
                         builder.append("</p>");
 
 
@@ -523,7 +523,7 @@ public class ClarivateServlet extends HttpServlet {
                             ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
                             double probability = classProbPairs.get(i).probability;
                             builder.append("<p>");
-                            builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                            builder.append("<b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
                             builder.append("</p>");
 
 
@@ -553,7 +553,7 @@ public class ClarivateServlet extends HttpServlet {
                         ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(hsv));
 
                         builder.append("<p>");
-                        builder.append("UKÄ/SCB: <b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
+                        builder.append("<b>" + true_hsv.getCode() + "</b> : " + true_hsv.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(prob) + ")");
                         builder.append("</p>");
 
 
@@ -578,7 +578,7 @@ public class ClarivateServlet extends HttpServlet {
                             ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
                             double probability = classProbPairs.get(i).probability;
                             builder.append("<p>");
-                            builder.append("UKÄ/SCB: <b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
+                            builder.append("<b>" + true_hsv2.getCode() + "</b> : " + true_hsv2.getEng_description().replaceAll("-->", "&rarr;") + " (probability: " + df.format(probability) + ")");
                             builder.append("</p>");
 
 
