@@ -187,29 +187,29 @@ public class HttpClientPlayground {
 <BR>
     <p><b>FAQ</b></p>
     <p>
-        <i><b>*En post saknar forskningsämne (&lt;post UT="000428587800009"/&gt;), vafalls?</b></i></p>
-    <p>Två fall kan generera avsaknad av klassning: (1) i  exportfilen från WoS specificerar LA-taggen ett annat språk än "English". Den absoluta majoriteten av poster i WoS har ju dock engelsk titel & abstract så detta är ovanligt (2) inga av de extraherade termer från posten återfinns i klassifikatorns vokabulär, detta torde vara ytterst ovanligt.</p>
+        <i><b>*En post saknar forskningsämne (&lt;post UT="000428587800009"/&gt;)</b></i></p>
+    <p>Två fall kan generera avsaknad av klassning: (1) i  exportfilen från WoS specificerar LA-taggen ett annat språk än "English". Den absoluta majoriteten av poster i WoS har ju dock engelsk titel & abstract så detta är ovanligt (2) inga av de extraherade termer från posten återfinns i klassifikatorns vokabulär.</p>
 
     <p>
-        <i><b>*Antalet uppladdade poster är fler än vad som returneras, eller ekvivalent, ett lägre värde anges i &lt;uploadedRecords&gt;xxx&lt;/uploadedRecords&gt; än antalet uppladdade poster. Vad är det frågan om!?</b></i>
+        <i><b>*Antalet uppladdade poster är fler än vad som returneras, eller ekvivalent, ett lägre värde anges i &lt;uploadedRecords&gt;xxx&lt;/uploadedRecords&gt; än antalet uppladdade poster</b></i>
     </p>
 
     <p>Eftersom exportfilen från WoS är i ett enkelt taggat format så är det svår att skilja den från andra filer med liknande format. Därför söks raden "FN Clarivate Analytics Web of Science" och först därefter börjar poster bearbetas. Det är därför viktigt att denna rad återfinns i början av filen.</p>
 
     <p>
 
-        <i><b>*Servern returnerar "nonsens"/ej en XML-fil!</b></i>
+        <i><b>*Servern returnerar "nonsens"/ej en XML-fil</b></i>
 
     </p>
-    <p>Överföringen från servern är komprimerad med Gzip vilket måste hanteras på klientsidan.</p>
+    <p>Överföringen från servern är komprimerad med Gzip vilket måste hanteras på klientsidan. Detta torde dock ske automatiskt i de flesta fall.</p>
 
     <p>
-        <i><b>*Begränsningar?</b></i>
+        <i><b>*Begränsningar</b></i>
     </p>
 
     <p>Uppladdad fil får inte överstiga 200MB. Jämförelse: en fil med 10483 poster är drygt 40MB och det tar, inklusive upp-och nerladdningstid (100Mbit/s), ca 50 sekunder att klassificera samtliga poster. Observera dock att servern inte väntar hur länge som helst på att data ska laddas upp så det är i regel att rekommendera att göra multipla anrop med mindre filer (säg ca 10MB per fil) istället för ett anrop med en stor fil.</p>
 
-    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support, kontinuerlig uppdatering av underliggande modeller etc.</p>
+    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support eller kontinuerlig uppdatering av underliggande modeller. Avsikten är uppdatera modellerna en gång i halvåret (senast uppdatering feb 2019).</p>
 </div>
 
 <img src="resources/aCat.png" alt="" style="width:10%;">
