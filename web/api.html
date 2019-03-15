@@ -70,7 +70,7 @@ File extensions supported by default include:
 
     <p>Hur du kommunicerar med API:et är beroende på vilket programmeringsspråk du använder. För att testa API:et utan att behöva skriva kod kan <a href="https://curl.haxx.se">curl</a> användas:</p>
 <pre class="prettyprint lang-bsh">
-  $ curl --compress --form "data=@uploadfile.txt" "http://klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
+  $ curl --compressed --form "data=@uploadfile.txt" "http://klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
 </pre>
 
     <p>Enkelt exempel i Java med Apache HttpClient:</p>
