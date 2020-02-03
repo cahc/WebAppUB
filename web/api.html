@@ -9,8 +9,8 @@
 
     <title>API för ämnesklassificering av WoS poster enligt (SCB/UKÄ)</title>
     <link rel="stylesheet" type="text/css" href="resources/hello.css">
-    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
-    <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 
     <!-- Global Site Tag (gtag.js) - Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=UA-98084539-1"></script>
@@ -54,6 +54,16 @@
 </head>
 <body>
 
+<script>
+
+    if (window.location.protocol !== 'https:') {
+
+        window.alert("Okrypterad åtkomst till denna tjänst kommer ej att vara tillgänglig i framtiden. Använd https://klassificera.ub.umu.se istället.") }
+
+
+</script>
+
+
 <!---   The lang-* class specifies the language file extensions.
 File extensions supported by default include:
 "bsh", "c", "cc", "cpp", "cs", "csh", "cyc", "cv", "htm", "html", "java",
@@ -70,7 +80,7 @@ File extensions supported by default include:
 
     <p>Hur du kommunicerar med API:et är beroende på vilket programmeringsspråk du använder. För att testa API:et utan att behöva skriva kod kan <a href="https://curl.haxx.se">curl</a> användas:</p>
 <pre class="prettyprint lang-bsh">
-  $ curl --compressed --form "data=@uploadfile.txt" "http://klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
+  $ curl --compressed --form "data=@uploadfile.txt" "https://klassificera.ub.umu.se/api/v1/wos?key=foo.bar@null.se&multilabelthreshold=0.2"
 </pre>
 
     <p>Enkelt exempel i Java med Apache HttpClient:</p>
@@ -84,7 +94,7 @@ public class HttpClientPlayground {
 
     File upload = new File(arg[0]); // motsvarande uploadfile.txt i curl-exemplet
     CloseableHttpClient httpClient = HttpClients.createDefault();
-    HttpPost uploadFile = new HttpPost("http://klassificera.ub.umu.se/api/v1/wos");
+    HttpPost uploadFile = new HttpPost("https://klassificera.ub.umu.se/api/v1/wos");
     MultipartEntityBuilder builder = MultipartEntityBuilder.create();
 
     builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN); //ersätt med din egen epost
