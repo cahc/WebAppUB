@@ -74,7 +74,7 @@ File extensions supported by default include:
 <BR/>
 <div class="container">
 <div class="d">
-    <p>I dagsläget erbjuds ett API för klassificering av engelskspråkiga poster från Web of Science [v.5.29]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån). API:et kan exempelvis utgöra ett led i automatiserade importer till den lokal publiceringsdatabasen. En export-fil från WoS i "Plain text/Full record"-format (se <a href="uploadFile.txt">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>http://klassificera.ub.umu.se/api/v1/wos</b> varvid en XML-fil komprimerad med <b>Gzip</b> returneras.</p>
+    <p>I dagsläget erbjuds ett API för klassificering av engelskspråkiga poster från Web of Science [v.5.29]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån). API:et kan exempelvis utgöra ett led i automatiserade importer till den lokal publiceringsdatabasen. En export-fil från WoS i "Plain text/Full record"-format (se <a href="uploadFile.txt">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>https://klassificera.ub.umu.se/api/v1/wos</b> varvid en XML-fil komprimerad med <b>Gzip</b> returneras.</p>
     <p>Utöver själva filen med WoS-poster (<b>data</b>=filnamn.txt) skall två nyckel-värde-par anges: <b>key</b>="epost" samt <b>multilabelthreshold</b>="[0.1,0.51]". Användarens epost-adress anges som värdet på <b>key</b> och <b>multilabelthreshold</b> specificerar ett tröskelvärde i intervallet [0.1,0.51] som styr i vilken utsträckning en post kan klassificeras med mer än ett forskningsämne. Det mest sannolika forskningsämnet returneras alltid, oavsett dess sannolikhetsvärde (se FAQ för undantag). Ett tröskelvärde på, säg 0.1, returnerar  (i förekommande fall och utöver det forskningsämne med högst sannolikhet) alla forskningsämnen vars sannolikhet >= 0.1. Ett tröskelvärde större än 0.50 betyder alltså att endast det mest sannolika forskningsämnet returneras per post. </p>
 </div>
 
@@ -219,7 +219,7 @@ public class HttpClientPlayground {
 
     <p>Uppladdad fil får inte överstiga 200MB. Jämförelse: en fil med 10483 poster är drygt 40MB och det tar, inklusive upp-och nerladdningstid (100Mbit/s), ca 50 sekunder att klassificera samtliga poster. Observera dock att servern inte väntar hur länge som helst på att data ska laddas upp så det är i regel att rekommendera att göra multipla anrop med mindre filer (säg ca 10MB per fil) istället för ett anrop med en stor fil.</p>
 
-    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support eller kontinuerlig uppdatering av underliggande modeller. Avsikten är uppdatera modellerna en gång i halvåret (senast uppdatering feb 2019).</p>
+    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support eller kontinuerlig uppdatering av underliggande modeller. Avsikten är uppdatera modellerna en gång i halvåret (senast uppdatering februari 2020).</p>
 </div>
 
 <img src="resources/aCat.png" alt="" style="width:10%;">
