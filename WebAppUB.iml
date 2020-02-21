@@ -8,6 +8,7 @@
         </descriptors>
         <webroots>
           <root url="file://$MODULE_DIR$/web" relative="/" />
+          <root url="file://$MODULE_DIR$/WebStuff" relative="/resources" />
         </webroots>
       </configuration>
     </facet>
@@ -19,10 +20,9 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" exported="" scope="PROVIDED" name="Tomcat 8.0.29" level="application_server_libraries" />
     <orderEntry type="library" name="Java EE 6-Java EE 6" level="project" />
     <orderEntry type="library" exported="" name="msgparser-1.15" level="project" />
-    <orderEntry type="library" exported="" name="Classy" level="application" />
-    <orderEntry type="library" name="Classy1" level="project" />
+    <orderEntry type="library" name="Java EE 6-Java EE 6" level="project" />
+    <orderEntry type="library" exported="" name="Classy" level="project" />
   </component>
 </module>

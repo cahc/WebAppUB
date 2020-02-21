@@ -77,7 +77,7 @@ public class ClarivateServlet extends HttpServlet {
 
     public static Classifier classifierLevel3swe = null;
 
-    private  IndexAndGlobalTermWeights swedishLevel3 = null;
+    public static  IndexAndGlobalTermWeights swedishLevel3 = null;
 
     private DecimalFormat df = new DecimalFormat("#0.00");
 
@@ -128,7 +128,7 @@ public class ClarivateServlet extends HttpServlet {
             String dir = null;
             if(isWinDev) {
 
-                dir = ("F:\\opt\\models\\");
+                dir = ("C:\\opt\\models\\");
             } else if(isMacDev) {
 
                 dir = "/Users/Cristian/models/";
@@ -661,6 +661,16 @@ public class ClarivateServlet extends HttpServlet {
 
             return;
         }
+
+
+        if (uri.endsWith("/api/v1/mods")) {
+
+            ModsAPI modsAPI = new ModsAPI(request,response);
+            return;
+        }
+
+
+
 
 
 
