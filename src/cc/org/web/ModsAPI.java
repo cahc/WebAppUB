@@ -96,6 +96,9 @@ public class ModsAPI {
         if (data == null) {
 
             w.println("no data submitted in request!");
+            w.flush();
+            w.close();
+            return;
 
         } else {
 
@@ -114,6 +117,9 @@ public class ModsAPI {
             if (recordList == null) {
 
                 w.println("could not parse xml!");
+                w.flush();
+                w.close();
+                return;
 
             } else {
 

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="API för automatisk klassificera bibliografiska poster forskningsämnen forskningsämnesgrupp forskningsämnesområde SCB UKÄ automatisk klassifikator">
+
+    <title>API för ämnesklassificering av WoS poster enligt (SCB/UKÄ)</title>
+    <link rel="stylesheet" type="text/css" href="resources/hello.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css"/>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <!-- Global Site Tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-98084539-1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'UA-98084539-1');
+    </script>
+
+    <script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+
+
+    <style>
+        div.a {
+            text-align: center;
+        }
+
+        div.b {
+            text-align: left;
+        }
+
+        div.c {
+            text-align: right;
+        }
+
+        div.d {
+            text-align: justify;
+        }
+
+        img {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+    </style>
+
+
+</head>
+<body>
+
+
+<!---   The lang-* class specifies the language file extensions.
+File extensions supported by default include:
+"bsh", "c", "cc", "cpp", "cs", "csh", "cyc", "cv", "htm", "html", "java",
+"js", "m", "mxml", "perl", "pl", "pm", "py", "rb", "sh", "xhtml", "xml",
+"xsl".
+--->
+<img src="resources/api.png" alt="" style="width:10%;">
+<BR/>
+<div class="container">
+<div class="d">
+    <p>Här beskrivs ett API för klassificering av engelskspråkiga samt svenskspråkiga poster från DiVA eller Swepub i MODS-format [testat för version 3.2 eller högre ]. Klassificeringen utförs på forskningsämnensnivå (5-siffernivån) för engelskspråkiga poster och på forskningsämnesgrupper (3-siffernivån) för svenskspråkiga poster. En export-fil från DiVA/Swepub i MODS-format (se <a href="uploadFile2.xml">exempel</a>) skickas med ett POST-anrop (<b>multipart/form-data</b>) till resurs-URL:n <b>https://klassificera.ub.umu.se/api/v1/mods</b> varvid en tabbavgränsad textfil komprimerad med <b>Gzip</b> returneras.</p>
+    <p>Utöver själva MODS-filen (<b>data</b>=filnamn.xml) skall två nyckel-värde-par anges: <b>key</b>="epost" samt <b>multilabelthreshold</b>="[0.1,0.51]". Användarens epost-adress anges som värdet på <b>key</b> och <b>multilabelthreshold</b> specificerar ett tröskelvärde i intervallet [0.1,0.51] som styr i vilken utsträckning en post kan klassificeras med mer än ett forskningsämne. Det mest sannolika forskningsämnet returneras alltid, oavsett dess sannolikhetsvärde. Ett tröskelvärde på, säg 0.1, returnerar  (i förekommande fall och utöver det forskningsämne med högst sannolikhet) alla forskningsämnen vars sannolikhet >= 0.1. Ett tröskelvärde större än 0.50 betyder alltså att endast det mest sannolika forskningsämnet returneras per post. </p>
+</div>
+
+    <p>Hur du kommunicerar med API:et är beroende på vilket programmeringsspråk du använder. För att testa API:et utan att behöva skriva kod kan <a href="https://curl.haxx.se">curl</a> användas:</p>
+<pre class="prettyprint lang-bsh">
+  $ curl --compressed --form "data=@uploadfile2.xml" "https://klassificera.ub.umu.se/api/v1/mods?key=foo.bar@null.se&multilabelthreshold=0.2" > resultat.txt
+</pre>
+
+    <p>Enkelt exempel i Java med Apache HttpClient:</p>
+
+<pre class="prettyprint" lang-java>
+//import org.apache [...]
+
+public class HttpClientPlayground {
+  public static void main(String[] arg) throws IOException {
+  if(arg.length != 1) { System.out.println("ange filnamn.."); System.exit(0); }
+
+    File upload = new File(arg[0]); // motsvarande uploadfile2.xml i curl-exemplet
+    CloseableHttpClient httpClient = HttpClients.createDefault();
+    HttpPost uploadFile = new HttpPost("https://klassificera.ub.umu.se/api/v1/mods");
+    MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+
+    builder.addTextBody("key", "foo.bar@null.se", ContentType.TEXT_PLAIN); //ersätt med din egen epost
+    builder.addTextBody("multilabelthreshold", "0.5", ContentType.TEXT_PLAIN); //ange önskat tröskelvärde
+
+    builder.addBinaryBody(
+      "data",
+      new FileInputStream(upload),
+      ContentType.DEFAULT_TEXT,
+      upload.getName()
+    );
+
+    HttpEntity multipart = builder.build();
+    uploadFile.setEntity(multipart);
+    CloseableHttpResponse response = httpClient.execute(uploadFile);
+    HttpEntity responseEntity = response.getEntity();
+
+    System.out.println(response.getStatusLine()); // 200 om OK
+    System.out.println(response.getFirstHeader("Content-Type") ); // text/xml;charset=UTF-8
+
+    //Apache HttpClienten hanterar Gzip automatiskt, vilket nog är fallet med de flesta liknande bibliotek
+    String XML = EntityUtils.toString(response.getEntity(), "UTF-8");
+    EntityUtils.consume(responseEntity);
+
+    //Parsa returnerad XML eller spara till fil..
+
+    BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("resultat.txt"),"UTF-8"));
+    out.write(XML);
+    out.flush();
+    out.close();
+
+    }
+}
+</pre>
+
+    <p>Servern returnerar en tabbavgränsad textfil. Om  multilabelthreshold < 0.5 kan i förekommande fall ämnesklassificeringen av en post representeras av mer än en rad. Exempel:</p>
+
+<pre class="prettyprint lang-wiki"> <!-- must encode first : https://opinionatedgeek.com/Codecs/HtmlEncoder -->
+    URI	                                                            DIVA2-ID	    LANGUAGE    HSV/SCB CODE	PROBABILITY	    LEVEL 1	                         LEVEL 2	            LEVEL 3
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-155622	    diva2:1282503   english	    30302	        0,45	    Medical and Health Sciences 	 Health Sciences 	    Public Health, Global Health, Social Medicine and Epidemiology
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-158586	    diva2:1318343   english	    30109	        0,64	    Medical and Health Sciences 	 Basic Medicine 	    Microbiology in the medical area
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-162833	    diva2:1351119   english	    30214	        0,39	    Medical and Health Sciences 	 Clinical Medicine 	    Urology and Nephrology
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-158382	    diva2:1307643   english	    50202	        0,71	    Social Sciences                      Economics and Business     Business Administration
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-166089	    diva2:1377061   swedish	    505                 0,96	    Social Sciences                      Law	                    not available for swedish records
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-161732	    diva2:1339172   english	    30107	        0,51	    Medical and Health Sciences 	 Basic Medicine 	    Medical Genetics
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-157495	    diva2:1298519   english	    30299	        0,34	    Medical and Health Sciences 	 Clinical Medicine 	    Other Clinical Medicine
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-161923	    diva2:1340792   english	    50102	        0,61	    Social Sciences 	                 Psychology 	            Applied Psychology
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-162681	    diva2:1346999   english	    30304	        0,57	    Medical and Health Sciences 	 Health Sciences 	    Nutrition and Dietetics
+    http://urn.kb.se/resolve?urn=urn:nbn:se:umu:diva-162501	    diva2:1344517   english	    30219	        0,70	    Medical and Health Sciences 	 Clinical Medicine 	    Respiratory Medicine and Allergy
+
+</pre>
+
+<BR>
+    <p>Uppladdad fil får inte överstiga 200MB.  Det är i regel att rekommendera att göra multipla anrop med mindre filer (säg ca 20-30 MB per fil) istället för ett anrop med en stor fil.</p>
+
+    <p>Avslutningsvis och viktigt, tyvärr ges det 0 och inga garantier avseende serverns upptid, support eller kontinuerlig uppdatering av underliggande modeller. Avsikten är uppdatera modellerna en gång i halvåret (senast uppdatering februari 2020).</p>
+</div>
+
+<img src="resources/aCat.png" alt="" style="width:10%;">
+</body>
+</html>
