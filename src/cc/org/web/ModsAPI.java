@@ -10,6 +10,7 @@ import jsat.classifiers.CategoricalResults;
 import jsat.classifiers.DataPoint;
 import jsat.linear.SparseVector;
 import jsat.linear.Vec;
+import org.apache.commons.io.input.BOMInputStream;
 import org.w3c.dom.Element;
 
 import javax.servlet.ServletException;
@@ -102,7 +103,16 @@ public class ModsAPI {
 
         } else {
 
-            BufferedReader br = new BufferedReader(new InputStreamReader(data.getInputStream(), StandardCharsets.UTF_8));
+            boolean include = false;
+            BOMInputStream bomIn = new BOMInputStream(  data.getInputStream(), include );
+            if (bomIn.hasBOM()) {
+
+                System.out.println("bom removed!");
+            }
+
+
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(bomIn, StandardCharsets.UTF_8));
             ModsDivaFileParser modsDivaFileParser = new ModsDivaFileParser();
 
             List<Record> recordList = null;

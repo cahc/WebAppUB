@@ -3,6 +3,11 @@
     <output-path>$PROJECT_DIR$/out/artifacts/WebAppUB_war</output-path>
     <root id="archive" name="WebAppUB_war.war">
       <element id="artifact" artifact-name="WebAppUB:war exploded" />
+      <element id="directory" name="WEB-INF">
+        <element id="directory" name="lib">
+          <element id="library" level="project" name="commons-io-2.6" />
+        </element>
+      </element>
     </root>
   </artifact>
 </component>
