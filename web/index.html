@@ -214,14 +214,14 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 
     <form class="form-inline" method="POST" id="uploadForm" enctype="multipart/form-data">
 
-        <p>Ladda upp en export-fil från Web of Science för batch-klassificering av poster: </p>
+        <p>Ladda upp en export-fil från Web of Science eller från DiVA för batch-klassificering av poster: </p>
 
         <input type="file" class="filestyle" data-buttonText="Välj fil (max 200 MB)" name="uploadFile">
 
         <select class="form-control" id="typavfil">
 
             <option>Web of Science (plain text/full record)</option>
-            <option>Outlook-meddelandeformat (unicode)</option>
+            <option>DiVA (XML/MODS)</option>
 
         </select>
 
@@ -232,7 +232,7 @@ https://www.mkyong.com/jquery/jquery-ajax-submit-a-multipart-form/
 
 
     <div id="loadingDiv">
-        <p><img src="resources/loading.gif" alt="waiting wheel"/> Bearbetar..vänta..</p>
+        <p><img src="resources/loading.gif" alt="waiting wheel"/> Anropar DiVA..vänta..</p>
     </div>
 
 

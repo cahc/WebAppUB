@@ -1,6 +1,7 @@
 package cc.org.web;
 
 import Database.IndexAndGlobalTermWeights;
+import Database.ModsDivaFileParser;
 import Database.ModsOnlineParser;
 import SwePub.ClassificationCategory;
 import SwePub.HsvCodeToName;
@@ -19,7 +20,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 
-import com.auxilii.msgparser.*;
+import org.apache.commons.io.input.BOMInputStream;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -27,7 +28,6 @@ import java.nio.charset.StandardCharsets;
 
 import java.text.DecimalFormat;
 
-import java.text.ParseException;
 import java.util.*;
 
 import java.util.logging.Level;
@@ -43,13 +43,12 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.transform.TransformerException;
 
 import static cc.org.web.ClarivateToJsat.extractTermsFromClarivateRecord;
-import static cc.org.web.ClarivateToJsat.printSparseVector;
 
 /**
  *
  * @author crco0001
  */
-@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/mapSize","/clearMap","/fetchId","/api/v1/wos","/api/v1/mods"},
+@WebServlet(name = "ClarivateServlet", urlPatterns = {"/upload","/sendBack","/sendBack2", "/mapSize","/clearMap","/fetchId","/api/v1/wos","/api/v1/mods"},
 
         initParams =  {@WebInitParam(name = "Admin",value="Apan Ola"),
                 @WebInitParam(name = "Admin2",value="Apan Ola2")
@@ -84,7 +83,8 @@ public class ClarivateServlet extends HttpServlet {
     private transient ServletConfig servletConfig;
 
 
-    private final Map<Long,List<ClarivateRecord>> filesReadyForSendingToClient = new HashMap<>();
+    private final Map<Long,List<ClarivateRecord>> filesReadyForSendingToClientWoS = new HashMap<>();
+    private final Map<Long,List<Record>> filesReadyForSendingToClientDiVA = new HashMap<>();
 
     protected final Random random = new Random();
 
@@ -128,7 +128,7 @@ public class ClarivateServlet extends HttpServlet {
             String dir = null;
             if(isWinDev) {
 
-                dir = ("C:\\opt\\models\\");
+                dir = ("C:\\Users\\cristian\\models\\");
             } else if(isMacDev) {
 
                 dir = "/Users/Cristian/models/";
@@ -215,8 +215,8 @@ public class ClarivateServlet extends HttpServlet {
             out.println("<title>Servlet ClarivateServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("mapSize is; " + this.filesReadyForSendingToClient.size());
-
+            out.println("mapSize (WoS) is; " + this.filesReadyForSendingToClientWoS.size());
+            out.println("mapSize (DiVA) is; " + this.filesReadyForSendingToClientDiVA.size());
             out.println("</body>")  ;
             out.println("</html>");
 
@@ -227,7 +227,7 @@ public class ClarivateServlet extends HttpServlet {
 
         response.setContentType("text/html;charset=UTF-8");
 
-        this.filesReadyForSendingToClient.clear();
+        this.filesReadyForSendingToClientWoS.clear();
 
         try (PrintWriter out = response.getWriter()) {
 
@@ -237,7 +237,8 @@ public class ClarivateServlet extends HttpServlet {
             out.println("<title>Servlet ClarivateServlet</title>");
             out.println("</head>");
             out.println("<body>");
-            out.println("map now cleared. New mapSize is; " + this.filesReadyForSendingToClient.size());
+            out.println("map now cleared. New mapSize is (WoS); " + this.filesReadyForSendingToClientWoS.size());
+            out.println("map now cleared. New mapSize is (DiVA); " + this.filesReadyForSendingToClientDiVA.size());
 
             out.println("</body>")  ;
             out.println("</html>");
@@ -265,7 +266,7 @@ public class ClarivateServlet extends HttpServlet {
 
         if(id != null) {
 
-            listOfProcessedRecords = this.filesReadyForSendingToClient.get(id);
+            listOfProcessedRecords = this.filesReadyForSendingToClientWoS.get(id);
 
             if(listOfProcessedRecords == null) listOfProcessedRecords = Collections.emptyList();
 
@@ -399,14 +400,213 @@ public class ClarivateServlet extends HttpServlet {
         if(id != null) {
 
 
-            this.filesReadyForSendingToClient.remove(id);
+            this.filesReadyForSendingToClientWoS.remove(id);
+        }
+
+
+    }
+
+    protected void sendFile2(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+
+        response.setContentType("text/html;charset=UTF-8");
+        response.setHeader("Content-Disposition","attachment; filename=resultat.txt");
+
+        String keyForGettingSavedResult = request.getParameter("id");
+
+        Long id = null;
+        try {
+            id = Long.valueOf(keyForGettingSavedResult);
+        } catch(NumberFormatException e) {
+
+            id = null;
+        }
+
+
+        List<Record> listOfProcessedRecords = Collections.emptyList();
+
+        if(id != null) {
+
+            listOfProcessedRecords = this.filesReadyForSendingToClientDiVA.get(id);
+
+            if(listOfProcessedRecords == null) listOfProcessedRecords = Collections.emptyList();
+
+        }
+
+        String sep ="\t";
+        double thresholdValue = 0.2;
+
+        OutputStream os = response.getOutputStream();
+
+
+        //URI DIVA2 LANG CODE PROBABILITY LEVEL 1 LEVEL 2 LEVEL3 (maybe null)
+        String header = new StringBuilder().append("URI").append(sep).append("DIVA2-ID").append(sep).append("LANGUAGE").append(sep).append("HSV/SCB CODE").append(sep).append("PROBABILITY").append(sep).append("LEVEL 1").append(sep).append("LEVEL 2").append(sep).append("LEVEL 3").toString();
+        os.write(header.getBytes("UTF-8"));
+        os.write(newLine);
+
+
+        for (Record record : listOfProcessedRecords) {
+
+            if (record.isContainsEnglish() || record.isContainsSwedish()) {
+
+                SparseVector vec = null;
+                if (record.isContainsEnglish()) {
+                    vec = ClarivateServlet.englishLevel5.getVecForUnSeenRecord(record);
+
+                    if (vec != null) {
+                        vec.normalize();
+                        CategoricalResults result = ClarivateServlet.classifierlevel5eng.classify(new DataPoint(vec));
+                        int hsv = result.mostLikely();
+                        double prob = result.getProb(hsv);
+                        ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(hsv));
+
+                        StringBuilder line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("english").append(sep).append(true_hsv.getCode()).append(sep).append( df.format(prob) );
+
+                        String[] names = true_hsv.getEng_description().split("-->");
+                        for(String s : names) { line.append(sep); line.append(s); }
+                        os.write(line.toString().getBytes("UTF-8"));
+                        os.write(newLine);
+
+                        //Also suggest other categories?
+
+                        Vec probabilities = result.getVecView();
+                        List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+                        for (int i = 0; i < probabilities.length(); i++) {
+
+                            if (i == hsv) continue;
+
+                            if (probabilities.get(i) >= thresholdValue) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+
+
+                        }
+
+                        Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+                        for (int i = 0; i < classProbPairs.size(); i++) {
+
+                            ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level5ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                            double probability2 = classProbPairs.get(i).probability;
+
+                            line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("english").append(sep).append(true_hsv2.getCode()).append(sep).append( df.format(probability2) );
+
+                            names = true_hsv2.getEng_description().split("-->");
+                            for(String s : names) { line.append(sep); line.append(s); }
+                            os.write( line.toString().getBytes("UTF-8") ) ;
+                            os.write(newLine);
+
+                        }
+
+                        //other categories end
+
+
+
+                    } else {
+
+                        StringBuilder line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("english").append(sep).append( "unknown" ).append(sep).append( -1.0 );
+                        line.append(sep).append("unknown").append(sep).append("unknown").append(sep).append("unknown");
+                        os.write( line.toString().getBytes("UTF-8") );
+                        os.write(newLine);
+                    }
+
+
+                } else {
+
+                    //must be swedish
+
+                    vec = ClarivateServlet.swedishLevel3.getVecForUnSeenRecord(record);
+
+                    if (vec != null) {
+                        vec.normalize();
+                        CategoricalResults result = ClarivateServlet.classifierLevel3swe.classify(new DataPoint(vec));
+
+                        int hsv = result.mostLikely();
+                        double prob = result.getProb(hsv);
+                        ClassificationCategory true_hsv = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(hsv));
+
+                        StringBuilder line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("swedish").append(sep).append(true_hsv.getCode()).append(sep).append( df.format(prob) );
+
+                        String[] names = true_hsv.getEng_description().split("-->");
+                        for(String s : names) { line.append(sep); line.append(s); }
+                        line.append(sep).append("not available for swedish records");
+
+                        os.write( line.toString().getBytes("UTF-8") );
+                        os.write(newLine);
+
+                        //Also suggest other categories?
+
+                        Vec probabilities = result.getVecView();
+                        List<ClassProbPair> classProbPairs = new ArrayList<>(5);
+
+                        for (int i = 0; i < probabilities.length(); i++) {
+
+                            if (i == hsv) continue;
+
+                            if (probabilities.get(i) >= thresholdValue) classProbPairs.add(new ClassProbPair(i, probabilities.get(i)));
+
+
+                        }
+
+                        Collections.sort(classProbPairs, Comparator.reverseOrder());
+
+                        for (int i = 0; i < classProbPairs.size(); i++) {
+
+                            ClassificationCategory true_hsv2 = HsvCodeToName.getCategoryInfo(IndexAndGlobalTermWeights.level3ToCategoryCodes.inverse().get(classProbPairs.get(i).classCode));
+                            double probability2 = classProbPairs.get(i).probability;
+
+                            line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("swedish").append(sep).append(true_hsv2.getCode()).append(sep).append( df.format(probability2) );
+
+                            names = true_hsv2.getEng_description().split("-->");
+                            for(String s : names) { line.append(sep); line.append(s); }
+                            line.append(sep).append("not available for swedish records");
+                            os.write(line.toString().getBytes("UTF-8"));
+                            os.write(newLine);
+
+                        }
+
+                        //other categories end
+
+
+
+
+                    } else {
+
+                        StringBuilder line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("swedish").append(sep).append( "unknown" ).append(sep).append( -1.0 );
+                        line.append(sep).append("unknown").append(sep).append("unknown").append(sep).append("unknown");
+                        os.write(line.toString().getBytes("UTF-8") );
+                        os.write(newLine);
+                    }
+
+
+                }
+
+
+            } else {
+
+                StringBuilder line = new StringBuilder().append(record.getURI()).append(sep).append(record.getDiva2Id()).append(sep).append("unsupported language detected").append(sep).append( "unknown" ).append(sep).append( -1.0 );
+                line.append(sep).append("unknown").append(sep).append("unknown").append(sep).append("unknown");
+                os.write(line.toString().getBytes("UTF-8"));
+
+            }
+
+
+        } //next record
+
+
+        os.flush();
+        os.close();
+
+
+        //remove from map
+        if(id != null) {
+
+
+            this.filesReadyForSendingToClientDiVA.remove(id);
         }
 
 
     }
 
 
-    //http://localhost:8080/fetchId?divaid=%22diva2:243244%22
 
     public void sendRequestToDivaAndClassify(HttpServletRequest request, HttpServletResponse response) throws IOException, XMLStreamException {
 
@@ -615,6 +815,11 @@ public class ClarivateServlet extends HttpServlet {
 
             sendFile(request,response);
 
+        } else if(uri.endsWith("/sendBack2")) {
+
+
+            sendFile2(request,response);
+
         } else if(uri.endsWith("/mapSize")) {
 
             reportMapSize(request,response);
@@ -720,23 +925,50 @@ public class ClarivateServlet extends HttpServlet {
             BufferedReader br = null;
             String setupInfo = "";
 
-            if ("Outlook-meddelandeformat (unicode)".equals(specifiedUploadFileType)) {
+            if ("DiVA (XML/MODS)".equals(specifiedUploadFileType)) {
 
-                //outlook parser
 
+                boolean include = false;
+                BOMInputStream bomIn = new BOMInputStream(  data, include );
+                if (bomIn.hasBOM()) {
+
+                    System.out.println("bom removed!");
+                }
+
+
+                BufferedReader br2 = new BufferedReader(new InputStreamReader(bomIn, StandardCharsets.UTF_8));
+                ModsDivaFileParser modsDivaFileParser = new ModsDivaFileParser();
+
+                List<Record> recordList = null;
                 try {
+                    recordList = modsDivaFileParser.parse(br2);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (XMLStreamException e) {
+                    e.printStackTrace();
+                }
+
+                if (recordList == null) {
+
+                    w.println("could not parse xml!");
+                    w.flush();
+                    w.close();
+                    return;
+
+                } else {
+
+                    long key = this.random.nextLong();
+                    System.out.println("records Parsed:" + recordList.size());
+                    w.println(generateDownloadLink2(key, recordList));
 
 
-                    MsgParser msgp = new MsgParser();
-                    Message msg = msgp.parseMsg(data);
-
-                    InputStream body = new ByteArrayInputStream(msg.getBodyText().getBytes("UTF-8")); //TODO specify charSet in getBytes?
-                    br = new BufferedReader(new InputStreamReader(body, StandardCharsets.UTF_8));
-                } catch (Exception e) {
-
-                    setupInfo = "Kontrollera att uppladdad fil verkligen är i outlook-meddelandeformat. (" + e.getLocalizedMessage() +")";
+                    br2.close();
+                    w.flush();
+                    w.close();
+                    return;
 
                 }
+
 
 
             } else if ("Web of Science (plain text/full record)".equals(specifiedUploadFileType)) {
@@ -824,12 +1056,26 @@ public class ClarivateServlet extends HttpServlet {
 
 
 
-        this.filesReadyForSendingToClient.put(key, records);
+        this.filesReadyForSendingToClientWoS.put(key, records);
 
         return "<button type=\"button\" onclick=\"location.href='sendBack?id=" + key +"'\" value=\"Go to Google\" class=\"btn btn-info\"><span class=\"glyphicon glyphicon-download-alt\"></span> Klart för nedladdning  </button>\n" +"";
 
 
     }
+
+
+
+    protected String generateDownloadLink2(long key, List<Record> records ) {
+
+
+
+        this.filesReadyForSendingToClientDiVA.put(key, records);
+
+        return "<button type=\"button\" onclick=\"location.href='sendBack2?id=" + key +"'\" value=\"Go to Google\" class=\"btn btn-info\"><span class=\"glyphicon glyphicon-download-alt\"></span> Klart för nedladdning  </button>\n" +"";
+
+
+    }
+
 
 
     protected boolean isTextPlain(Part filePart) {
