@@ -228,6 +228,7 @@ public class ClarivateServlet extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
 
         this.filesReadyForSendingToClientWoS.clear();
+        this.filesReadyForSendingToClientDiVA.clear();
 
         try (PrintWriter out = response.getWriter()) {
 
